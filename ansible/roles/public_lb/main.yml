@@ -1,0 +1,15 @@
+---
+
+- name: Reload HAProxy daemon
+  systemd:
+    name: "haproxy"
+    enable: yes
+    state: reloaded
+  ignore_errors: true
+
+- name: Reload Rsyslog daemon
+  systemd:
+    name: "rsyslog"
+    enable: yes
+    state: reloaded
+  ignore_errors: true

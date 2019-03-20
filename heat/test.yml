@@ -1,0 +1,265 @@
+heat_template_version: 2018-08-31
+
+description: CIAP Template
+
+#>===========================================================================<#
+#>=======                         Parameters                          =======<#
+#>===========================================================================<#
+parameters:
+  public_net:
+    type: string
+    default: public
+    description: >
+      ID or name of public network for which floating IP addresses will be allocated
+
+  key_name:
+    type: string
+    default: stack
+    description: Name of keypair to assign to plug server
+
+  server_image:
+    type: string
+    default: e3402382-c4f1-4cc0-a42d-68bb7469a873
+    description: Id of CentOS 7 image
+
+  server_flavor:
+    type: string
+    default: m1.small
+    description: Flavor desired
+
+  deploy_plug:
+    type: boolean
+    default: yes
+    description: Deploy a plug server
+
+  cidr:
+    type: string
+    default: 10.1.0.0/24
+    description: CIDR
+
+#>===========================================================================<#
+#>=======                          Resources                          =======<#
+#>===========================================================================<#
+resources:
+#>================================= ROUTER ==================================<#
+  ciap_router:
+    type: OS::Neutron::Router
+    properties:
+      name: CIAP Router
+      external_gateway_info:
+        network: { get_param: public_net }
+
+#>============================== Public ZONE ==============================<#
+  public_network:
+    type: OS::Neutron::Net
+    properties:
+      name: CIAP Public Network
+
+  public_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      name: CIAP Public Subnet
+      network_id: { get_resource: public_network }
+      cidr:
+        str_replace:
+          template: cidr_0.cidr_8.cidr_16.0/27
+          params:
+            cidr_0:  { str_split: ['.', { get_param: cidr }, 0] }
+            cidr_8:  { str_split: ['.', { get_param: cidr }, 1] }
+            cidr_16: { str_split: ['.', { get_param: cidr }, 2] }
+
+  public_router_interface:
+    type: OS::Neutron::RouterInterface
+    properties:
+      router_id: { get_resource: ciap_router }
+      subnet_id: { get_resource: admin_subnet }
+
+  admin_server:
+    type: OS::Nova::Server
+    properties:
+      name: ciap-admin-server
+      image: { get_param: server_image }
+      flavor: { get_param: server_flavor }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: admin_port_server }
+      user_data: |
+        #!/bin/sh
+        yum -y update
+        yum -y upgrade
+        yum -y install epel-release
+      user_data_format: RAW
+
+  admin_port_server:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: admin_network }
+      fixed_ips:
+        - subnet_id: { get_resource: admin_subnet }
+      security_groups:
+        - { get_resource: admin_security_group }
+
+  admin_floating_ip_server:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network: { get_param: public_net }
+      port_id: { get_resource: admin_port_server }
+
+  admin_security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      description: Admin Security Group
+      rules:
+         # Ingress:
+         - { remote_ip_prefix: 0.0.0.0/0, direction: ingress, protocol: tcp, port_range_min: 22, port_range_max: 22 }
+         - { remote_ip_prefix: 0.0.0.0/0, direction: ingress, protocol: icmp }
+         # Egress:
+         - { remote_ip_prefix: 0.0.0.0/0, direction: egress, protocol: tcp, port_range_min: 22, port_range_max: 22 }
+
+#>============================== ADMIN ZONE ==============================<#
+  admin_network:
+    type: OS::Neutron::Net
+    properties:
+      name: CIAP Admin Network
+
+  admin_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      name: CIAP Admin Subnet
+      network_id: { get_resource: admin_network }
+      cidr:
+        str_replace:
+          template: cidr_0.cidr_8.cidr_16.192/27
+          params:
+            cidr_0:  { str_split: ['.', { get_param: cidr }, 0] }
+            cidr_8:  { str_split: ['.', { get_param: cidr }, 1] }
+            cidr_16: { str_split: ['.', { get_param: cidr }, 2] }
+
+  admin_router_interface:
+    type: OS::Neutron::RouterInterface
+    properties:
+      router_id: { get_resource: ciap_router }
+      subnet_id: { get_resource: admin_subnet }
+
+  admin_server:
+    type: OS::Nova::Server
+    properties:
+      name: ciap-admin-server
+      image: { get_param: server_image }
+      flavor: { get_param: server_flavor }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: admin_port_server }
+      user_data: |
+        #!/bin/sh
+        yum -y update
+        yum -y upgrade
+        yum -y install epel-release
+      user_data_format: RAW
+
+  admin_port_server:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: admin_network }
+      fixed_ips:
+        - subnet_id: { get_resource: admin_subnet }
+      security_groups:
+        - { get_resource: admin_security_group }
+
+  admin_floating_ip_server:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network: { get_param: public_net }
+      port_id: { get_resource: admin_port_server }
+
+  admin_security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      description: Admin Security Group
+      rules:
+         # Ingress:
+         - { remote_ip_prefix: 0.0.0.0/0, direction: ingress, protocol: tcp, port_range_min: 22, port_range_max: 22 }
+         - { remote_ip_prefix: 0.0.0.0/0, direction: ingress, protocol: icmp }
+         # Egress:
+         - { remote_ip_prefix: 0.0.0.0/0, direction: egress, protocol: tcp, port_range_min: 22, port_range_max: 22 }
+
+#>============================== PLUG ZONE ==============================<#
+  plug_network:
+    type: OS::Neutron::Net
+    condition: { get_param: deploy_plug }
+    properties:
+      name: CIAP Plug network
+
+  plug_subnet:
+    type: OS::Neutron::Subnet
+    condition: { get_param: deploy_plug }
+    properties:
+      name: CIAP Plug Subnet
+      network_id: { get_resource: plug_network }
+      cidr:
+        str_replace:
+          template: cidr_0.cidr_8.cidr_16.224/27
+          params:
+            cidr_0:  { str_split: ['.', { get_param: cidr }, 0] }
+            cidr_8:  { str_split: ['.', { get_param: cidr }, 1] }
+            cidr_16: { str_split: ['.', { get_param: cidr }, 2] }
+
+  plug_router_interface:
+    type: OS::Neutron::RouterInterface
+    condition: { get_param: deploy_plug }
+    properties:
+      router_id: { get_resource: ciap_router }
+      subnet_id: { get_resource: plug_subnet }
+
+  plug_server:
+    type: OS::Nova::Server
+    condition: { get_param: deploy_plug }
+    properties:
+      name: ciap-plug-server
+      image: { get_param: server_image }
+      flavor: { get_param: server_flavor }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: plug_port_server }
+      user_data: |
+        #!/bin/sh
+        yum -y update
+        yum -y upgrade
+        yum -y install epel-release
+        yum -y install nginx
+        service nginx start
+        systemctl enable nginx
+      user_data_format: RAW
+
+  plug_port_server:
+    type: OS::Neutron::Port
+    condition: { get_param: deploy_plug }
+    properties:
+      network_id: { get_resource: plug_network }
+      fixed_ips:
+        - subnet_id: { get_resource: plug_subnet }
+      security_groups:
+        - { get_resource: plug_security_group }
+
+  plug_floating_ip_server:
+    type: OS::Neutron::FloatingIP
+    condition: { get_param: deploy_plug }
+    properties:
+      floating_network: { get_param: public_net }
+      port_id: { get_resource: plug_port_server }
+
+  plug_security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      description: Plug Security Group
+      rules:
+         # Ingress:
+         - { remote_ip_prefix: 0.0.0.0/0, direction: ingress, protocol: tcp, port_range_min: 80,  port_range_max: 80  }
+         - { remote_ip_prefix: 0.0.0.0/0, direction: ingress, protocol: tcp, port_range_min: 443, port_range_max: 443 }
+         - { remote_ip_prefix: 0.0.0.0/0, direction: ingress, protocol: icmp }
+
+#>============================== OUTPUT ==============================<#
+outputs:
+  admin_public_ip:
+    description: The Public IP address of the deployed admin instance
+    value: { get_attr: [admin_server, first_address] }

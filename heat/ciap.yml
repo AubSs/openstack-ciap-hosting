@@ -1,0 +1,376 @@
+heat_template_version: 2018-08-31
+
+description: CIAP Template
+
+#>===========================================================================<#
+#>=======                         Parameters                          =======<#
+#>===========================================================================<#
+parameters:
+  public_net:
+    type: string
+    default: public
+    description: >
+      ID or name of public network for which floating IP addresses will be allocated
+
+  key_name:
+    type: string
+    default: stack
+    description: Name of keypair to assign to plug server
+
+  server_image:
+    type: string
+    default: e3402382-c4f1-4cc0-a42d-68bb7469a873
+    description: Id of CentOS image
+
+  server_flavor:
+    type: string
+    default: m1.small
+    description: Flavor desired
+
+  deploy_plug:
+    type: boolean
+    default: yes
+    description: Deploy a plug server
+
+  cidr:
+    type: string
+    default: 10.1.0.0/24
+    description: CIDR
+
+
+#>===========================================================================<#
+#>=======                          Resources                          =======<#
+#>===========================================================================<#
+resources:
+#>================================= ROUTER ==================================<#
+  ciap_router:
+    type: OS::Neutron::Router
+    properties:
+      name: CIAP Router
+      external_gateway_info:
+        network: { get_param: public_net }
+
+#>=============================== PUBLIC ZONE ===============================<#
+  ciap_public_net:
+    type: OS::Neutron::Net
+    properties:
+      name: CIAP Public Network
+
+  ciap_public_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      name: CIAP Public Subnet
+      network_id: { get_resource: ciap_public_net }
+      cidr:
+        str_replace:
+          template: cidr_0.cidr_8.cidr_16.0/27
+          params:
+            cidr_0:  { str_split: ['.', { get_param: cidr }, 0] }
+            cidr_8:  { str_split: ['.', { get_param: cidr }, 1] }
+            cidr_16: { str_split: ['.', { get_param: cidr }, 2] }
+
+  ciap_public_router_interface:
+    type: OS::Neutron::RouterInterface
+    properties:
+      router_id: { get_resource: ciap_router }
+      subnet_id: { get_resource: ciap_public_subnet }
+
+# Public Reverse Proxy (HAProxy) server
+  ciap_rp_server:
+    type: OS::Nova::Server
+    properties:
+      name: CIAP Reverse Proxy
+      image: { get_param: server_image }
+      flavor: { get_param: server_flavor }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: ciap_rp_port }
+
+  ciap_rp_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: ciap_public_net }
+      fixed_ips:
+        - subnet_id: { get_resource: ciap_public_subnet }
+      security_groups:
+        - { get_resource: ciap_rp_security_group }
+
+  ciap_rp_floating_ip:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network: { get_param: public_net }
+      port_id: { get_resource: ciap_rp_floating_ip }
+
+  ciap_rp_security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      description: >
+        Security group rule to create
+        Allows connection from remote IP (tcp22, 80, 443)
+      rules:
+         # Ingress: TCP/SSH/22/RemoteIP | TCP/HTTP/80/RemoteIP | TCP/HTTPS/443/RemoteIP
+         - { remote_ip_prefix: "0.0.0.0/0", direction: ingress, protocol: tcp, port_range_min: 22, port_range_max: 22}
+         - { remote_ip_prefix: "0.0.0.0/0", direction: ingress, protocol: tcp, port_range_min: 80, port_range_max: 80}
+         - { remote_ip_prefix: "0.0.0.0/0", direction: ingress, protocol: tcp, port_range_min: 443, port_range_max: 443}
+         # Egress: TCP/SSH/22/RemoteIP | TCP/HTTP/80/RemoteIP | TCP/HTTPS/443/RemoteIP
+         - { remote_ip_prefix: "0.0.0.0/0", direction: egress, protocol: tcp, port_range_min: 22, port_range_max: 22}
+         - { remote_ip_prefix: "0.0.0.0/0", direction: egress, protocol: tcp, port_range_min: 80, port_range_max: 80}
+         - { remote_ip_prefix: "0.0.0.0/0", direction: egress, protocol: tcp, port_range_min: 443, port_range_max: 443}
+
+
+#>============================== FILTERED ZONE ==============================<#
+  ciap_filtered_net:
+    type: OS::Neutron::Net
+    properties:
+      name: CIAP Filtered Network
+
+  ciap_filtered_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      name: CIAP Filtered Subnet
+      network_id: { get_resource: ciap_filtered_net }
+      cidr: "10.11.0.0/24"
+
+  ciap_filtered_router_interface:
+    type: OS::Neutron::RouterInterface
+    properties:
+      router_id: { get_resource: ciap_router }
+      subnet_id: { get_resource: ciap_filtered_subnet }
+
+# Filtered VPN server
+  ciap_vpn:
+    type: OS::Nova::Server
+    properties:
+      name: CIAP TCP Relay
+      image: { get_param: server_image }
+      flavor: { get_param: server_flavor }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: ciap_vpn_port }
+
+  ciap_vpn_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: ciap_filtered_net }
+      fixed_ips:
+        - subnet_id: { get_resource: ciap_filtered_subnet }
+
+# Filtered NGINX server
+  ciap_filtered_server_2:
+    type: OS::Nova::Server
+    properties:
+      name: ciap_filtered_server_2
+      image: { get_param: server_image }
+      flavor: { get_param: server_flavor }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: ciap_filtered_port_server_2 }
+
+  ciap_filtered_port_server_2:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: ciap_filtered_net }
+      fixed_ips:
+        - subnet_id: { get_resource: ciap_filtered_subnet }
+
+  ciap_filtered_floating_ip_server_2:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network: { get_param: public_net }
+      port_id: { get_resource: ciap_filtered_port_server_2 }
+
+#>============================== PRIVATE ZONE ===============================<#
+  ciap_private_net:
+    type: OS::Neutron::Net
+    properties:
+      name: CIAP Private Network
+
+  ciap_private_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      name: CIAP Private Subnet
+      network_id: { get_resource: ciap_private_net }
+      cidr: "10.12.0.0/24"
+      gateway_ip: "10.12.0.1"
+      dns_nameservers: ["1.1.1.1", "1.0.0.1"]
+      allocation_pools:
+        - start: "10.12.0.2"
+          end: "10.12.0.254"
+
+  ciap_private_router_interface:
+    type: OS::Neutron::RouterInterface
+    properties:
+      router_id: { get_resource: ciap_router }
+      subnet_id: { get_resource: ciap_private_subnet }
+
+# Private NGINX server
+  ciap_private_server_1:
+    type: OS::Nova::Server
+    properties:
+      name: ciap_private_server_1
+      image: { get_param: server_image }
+      flavor: { get_param: server_flavor }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: ciap_private_port_server_1 }
+
+  ciap_private_port_server_1:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: ciap_private_net }
+      fixed_ips:
+        - subnet_id: { get_resource: ciap_private_subnet }
+
+  ciap_private_floating_ip_server_1:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network: { get_param: public_net }
+      port_id: { get_resource: ciap_private_port_server_1 }
+
+# Private LOG server
+  ciap_private_server_2:
+    type: OS::Nova::Server
+    properties:
+      name: ciap_private_server_2
+      image: { get_param: server_image }
+      flavor: { get_param: server_flavor }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: ciap_private_port_server_2 }
+
+  ciap_private_port_server_2:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: ciap_private_net }
+      fixed_ips:
+        - subnet_id: { get_resource: ciap_private_subnet }
+
+
+#>============================== ADMIN ZONE ==============================<#
+  admin_network:
+    type: OS::Neutron::Net
+    properties:
+      name: CIAP Admin Network
+
+  admin_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      name: CIAP Admin Subnet
+      network_id: { get_resource: admin_network }
+      cidr: "10.15.0.0/24"
+      gateway_ip: "10.15.0.1"
+      dns_nameservers: ["1.1.1.1", "1.0.0.1"]
+      allocation_pools:
+        - start: "10.15.0.2"
+          end: "10.15.0.254"
+
+  admin_router_interface:
+    type: OS::Neutron::RouterInterface
+    properties:
+      router_id: { get_resource: ciap_router }
+      subnet_id: { get_resource: admin_subnet }
+
+  admin_server:
+    type: OS::Nova::Server
+    properties:
+      name: Admin server
+      image: { get_param: server_image }
+      flavor: { get_param: server_flavor }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: admin_port_server }
+
+  admin_port_server:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: admin_network }
+      fixed_ips:
+        - subnet_id: { get_resource: admin_subnet }
+
+  admin_floating_ip_server:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network: { get_param: public_net }
+      port_id: { get_resource: admin_port_server }
+
+
+#>============================== PLUG ZONE ==============================<#
+  plug_network:
+    type: OS::Neutron::Net
+    condition: { get_param: deploy_plug }
+    properties:
+      name: CIAP Plug network
+
+  plug_subnet:
+    type: OS::Neutron::Subnet
+    condition: { get_param: deploy_plug }
+    properties:
+      name: CIAP Plug Subnet
+      network_id: { get_resource: plug_network }
+      cidr: "10.16.0.0/24"
+      gateway_ip: "10.16.0.1"
+      dns_nameservers: ["1.1.1.1", "1.0.0.1"]
+      allocation_pools:
+        - start: "10.16.0.2"
+          end: "10.16.0.254"
+
+  plug_router_interface:
+    type: OS::Neutron::RouterInterface
+    condition: { get_param: deploy_plug }
+    properties:
+      router_id: { get_resource: ciap_router }
+      subnet_id: { get_resource: plug_subnet }
+
+  plug_server:
+    type: OS::Nova::Server
+    condition: { get_param: deploy_plug }
+    properties:
+      name: Plug server
+      image: { get_param: server_image }
+      flavor: { get_param: server_flavor }
+      key_name: { get_param: key_name }
+      networks:
+        - port: { get_resource: plug_port_server }
+      user_data: |
+        #!/bin/sh
+        yum -y update
+        yum -y upgrade
+        yum -y install epel-release
+        yum -y install nginx
+        service nginx start
+        systemctl enable nginx
+      user_data_format: RAW
+
+  plug_port_server:
+    type: OS::Neutron::Port
+    condition: { get_param: deploy_plug }
+    properties:
+      network_id: { get_resource: plug_network }
+      fixed_ips:
+        - subnet_id: { get_resource: plug_subnet }
+      security_groups:
+        - { get_resource: plug_security_group }
+
+  plug_floating_ip_server:
+    type: OS::Neutron::FloatingIP
+    condition: { get_param: deploy_plug }
+    properties:
+      floating_network: { get_param: public_net }
+      port_id: { get_resource: plug_port_server }
+
+  plug_security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      name: "Plug security group"
+      description: >
+        Security group rule to create
+        Allows connection from remote IP (tcp22, 80, 443)
+      rules:
+         # Ingress: TCP/SSH/22/RemoteIP | TCP/HTTP/80/RemoteIP | TCP/HTTPS/443/RemoteIP
+         - { remote_ip_prefix: "0.0.0.0/0", direction: ingress, protocol: tcp, port_range_min: 22,  port_range_max: 22  }
+         - { remote_ip_prefix: "0.0.0.0/0", direction: ingress, protocol: tcp, port_range_min: 80,  port_range_max: 80  }
+         - { remote_ip_prefix: "0.0.0.0/0", direction: ingress, protocol: tcp, port_range_min: 443, port_range_max: 443 }
+         # Egress: TCP/SSH/22/RemoteIP | TCP/HTTP/80/RemoteIP | TCP/HTTPS/443/RemoteIP
+         - { remote_ip_prefix: "0.0.0.0/0", direction: egress, protocol: tcp, port_range_min: 22,  port_range_max: 22  }
+         - { remote_ip_prefix: "0.0.0.0/0", direction: egress, protocol: tcp, port_range_min: 80,  port_range_max: 80  }
+         - { remote_ip_prefix: "0.0.0.0/0", direction: egress, protocol: tcp, port_range_min: 443, port_range_max: 443 }
