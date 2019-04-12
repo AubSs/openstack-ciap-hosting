@@ -37,6 +37,15 @@ parameters:
     default: 10.1.0.0/24
     description: CIDR
 
+  ssh_username:
+    type: string
+    default: ciap
+    description: User name ssh
+
+  ssh_public_key:
+    type: string
+    description: Admin public key
+    
 #>===========================================================================<#
 #>=======                          Resources                          =======<#
 #>===========================================================================<#
@@ -82,6 +91,38 @@ resources:
       router_id: { get_resource: ciap_router }
       subnet_id: { get_resource: admin_subnet }
 
+  admin_server_boot_config:
+    type: OS::Heat::CloudConfig
+    properties:
+      cloud_config:
+        users:
+          - name: { get_param: ssh_username }
+            ssh_authorized_keys:
+              - { get_param: ssh_public_key }
+            shell: /bin/bash
+            runcmd:
+              - sed -i 's/#PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config
+              - sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/g' /etc/ssh/sshd_config
+
+  admin_server_boot_script:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config:
+        str_replace:
+          template: |
+            #!/bin/bash
+            echo -n "$PRIVATE_KEY" > /home/$USERNAME/.ssh/id_rsa
+          params:
+            $USERNAME: { get_param: ssh_username }
+            $PRIVATE_KEY: { get_attr: [ssh_key, private_key] }
+
+  server_init:
+    type: OS::Heat::MultipartMime
+    properties:
+      parts:
+      - config: {get_resource: admin_server_boot_config}
+      - config: {get_resource: admin_server_boot_script}
+
   admin_server:
     type: OS::Nova::Server
     properties:
@@ -92,19 +133,8 @@ resources:
       networks:
         - port: { get_resource: admin_port }
       user_data:
-        str_replace:
-          template: |
-            #!/bin/sh
-            # LOOK FOR CLOUD-INIT
-            yum -y upgrade
-            yum -y install epel-release
-            yum install -y python36 python36-pip python36-devel \
-                           htop emacs-nox vim-enhanced ansible  \
-                           nano python-pip
-            echo "$PRIVATE_KEY" > /home/centos/.ssh/id_rsa
-          params:
-            $PRIVATE_KEY: { get_attr: [ssh_key, private_key] }
-      user_data_format: RAW
+      user_data_format: SOFTWARE_CONFIG
+      user_data: { get_resource: server_init }
 
   admin_port:
     type: OS::Neutron::Port

@@ -17,6 +17,9 @@ class CIAP(object):
         self.conf = conf
         self.openstack = openstack.connection.Connection(**conf['Openstack'])
 
+        with open(self.conf['CIAP']['public_key_file'], 'r') as file:
+            self.conf['Orchestration']['ssh_public_key'] = file.read()
+
     def New(self):
         print(f'Create {self.name} stack')
         self._create_container(self.name, "ansible")
