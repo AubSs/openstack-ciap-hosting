@@ -1,3 +1,6 @@
+# Conf
+*.ini
+
 # Emacs
 *~
 

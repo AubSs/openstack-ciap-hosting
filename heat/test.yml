@@ -41,6 +41,13 @@ parameters:
 #>=======                          Resources                          =======<#
 #>===========================================================================<#
 resources:
+#>================================= KEYPAIR =================================<#
+  ssh_key:
+    type: OS::Nova::KeyPair
+    properties:
+      name: ciap
+      save_private_key: True
+      
 #>================================= ROUTER ==================================<#
   ciap_router:
     type: OS::Neutron::Router
@@ -84,16 +91,19 @@ resources:
       key_name: { get_param: key_name }
       networks:
         - port: { get_resource: admin_port }
-      user_data: |
-        #!/bin/sh
-
-        # LOOK FOR CLOUD-INIT
-        q
-        yum -y upgrade
-        yum -y install epel-release
-        yum install -y python36 python36-pip python36-devel \
-                       htop emacs-nox vim-enhanced ansible  \
-                       nano python-pip
+      user_data:
+        str_replace:
+          template: |
+            #!/bin/sh
+            # LOOK FOR CLOUD-INIT
+            yum -y upgrade
+            yum -y install epel-release
+            yum install -y python36 python36-pip python36-devel \
+                           htop emacs-nox vim-enhanced ansible  \
+                           nano python-pip
+            echo "$PRIVATE_KEY" > /home/centos/.ssh/id_rsa
+          params:
+            $PRIVATE_KEY: { get_attr: [ssh_key, private_key] }
       user_data_format: RAW
 
   admin_port:
@@ -120,7 +130,10 @@ resources:
          - { remote_ip_prefix: 0.0.0.0/0, direction: ingress, protocol: tcp, port_range_min: 22, port_range_max: 22 }
          - { remote_ip_prefix: 0.0.0.0/0, direction: ingress, protocol: icmp }
          # Egress:
+         - { remote_ip_prefix: 0.0.0.0/0, direction: egress, protocol: icmp }
          - { remote_ip_prefix: 0.0.0.0/0, direction: egress, protocol: tcp, port_range_min: 22, port_range_max: 22 }
+         - { remote_ip_prefix: 0.0.0.0/0, direction: egress, protocol: tcp, port_range_min: 80,  port_range_max: 80  }
+         - { remote_ip_prefix: 0.0.0.0/0, direction: egress, protocol: tcp, port_range_min: 443, port_range_max: 443 }
 
 #>============================== PLUG ZONE ==============================<#
   plug_network:
@@ -158,7 +171,7 @@ resources:
       name: ciap-plug-server
       image: { get_param: server_image }
       flavor: { get_param: server_flavor }
-      key_name: { get_param: key_name }
+      key_name: { get_resource: ssh_key }
       networks:
         - port: { get_resource: plug_port }
       user_data: |
