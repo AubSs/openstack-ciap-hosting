@@ -14,7 +14,6 @@ parameters:
 
   server_image:
     type: string
-    default: e3402382-c4f1-4cc0-a42d-68bb7469a873
     description: Id of CentOS 7 image
 
   server_flavor:
@@ -230,6 +229,22 @@ resources:
         yum -y install nginx
         service nginx start
         systemctl enable nginx
+        # Setup SSL
+        SSL_DIR=/etc/ssl/private
+        mkdir $SSL_DIR
+        chmod 700 $SSL_DIR
+        openssl req -x509 -newkey rsa:4096 -keyout $SSL_DIR/key.pem -out $SSL_DIR/cert.pem -nodes -days 365 -subj '/CN=localhost'
+        openssl dhparam -out /etc/ssl/certs/dhparam.pem 2048
+        echo "server {
+            listen       443 http2 ssl default_server;
+            listen       [::]:443 http2 ssl default_server;
+            server_name  _;
+            root         /usr/share/nginx/html;
+            ssl_certificate /etc/ssl/private/cert.pem;
+            ssl_certificate_key /etc/ssl/private/key.pem;
+            ssl_dhparam /etc/ssl/certs/dhparam.pem;
+        }" > /etc/nginx/conf.d/ssl.conf
+        nginx -s reload
       user_data_format: RAW
 
   plug_port:
