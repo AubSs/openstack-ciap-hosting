@@ -79,7 +79,7 @@ resources:
       description: Scale up if CPU > 80% for 5 minutes
       metric: cpu_util
       aggregation_method: mean
-      granularity: 60 # TODO Set to 300
+      granularity: 300
       evaluation_periods: 1
       threshold: 80
       resource_type: instance
@@ -90,9 +90,10 @@ resources:
             params:
               url: { get_attr: [mid_waf_scaleup_policy, signal_url] }
       query:
-        list_join:
-          - ''
-          - - {'=': { server_group: { get_resource: server_group_id }} }
+        str_replace:
+          template: '{"=": {"server_group": "$ID"}}'
+          params:
+            $ID: { get_resource: server_group_id }
 
   mid_waf_cpu_alarm_low:
     type: OS::Aodh::GnocchiAggregationByResourcesAlarm
@@ -111,9 +112,10 @@ resources:
             params:
               url: { get_attr: [mid_waf_scaledown_policy, signal_url] }
       query:
-        list_join:
-          - ''
-          - - {'=': { server_group: { get_resource: server_group_id }} }
+        str_replace:
+          template: '{"=": {"server_group": "$ID"}}'
+          params:
+            $ID: { get_resource: server_group_id }
 
   lb:
     type: OS::Octavia::LoadBalancer
