@@ -1,0 +1,156 @@
+heat_template_version: '2018-08-31'
+
+description: CIAP Template
+
+#>===========================================================================<#
+#>=======                         Parameters                          =======<#
+#>===========================================================================<#
+parameters:
+  public_net:
+    type: string
+    default: public
+    description: >
+      ID or name of public network for which floating IP addresses will be allocated
+
+  server_image:
+    type: string
+    description: Id of CentOS 7 image
+
+  server_flavor:
+    type: string
+    default: m1.small
+    description: Flavor desired
+
+  deploy_plug:
+    type: boolean
+    default: yes
+    description: Deploy a plug server
+
+  cidr:
+    type: string
+    default: 10.1.0.0/24
+    description: CIDR
+
+  ssh_username:
+    type: string
+    default: ciap
+    description: User name ssh
+
+  ssh_public_key:
+    type: string
+    description: Admin public key
+
+  openstack_rc:
+    type: string
+
+  container_name:
+    type: string
+
+  ansible_tarball:
+    type: string
+    
+#>===========================================================================<#
+#>=======                          Resources                          =======<#
+#>===========================================================================<#
+resources:
+#>================================= KEYPAIR =================================<#
+  ssh_key:
+    type: OS::Nova::KeyPair
+    properties:
+      name:
+        list_join: ['-', ['ciap', { get_param: 'OS::stack_name' }, { str_split: ['-', { get_param: 'OS::stack_id' }, 0] }]]
+      save_private_key: True
+
+#>================================= ROUTER ==================================<#
+  ciap_router:
+    type: OS::Neutron::Router
+    properties:
+      name: CIAP Router
+      external_gateway_info:
+        network: { get_param: public_net }
+
+#>============================= FILTERED ZONE ============================<#
+  filtered_network:
+    type: OS::Neutron::Net
+    properties:
+      name: CIAP Filtered Network
+
+  filtered_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      name: CIAP Filtered Subnet
+      network_id: { get_resource: filtered_network }
+      cidr:
+        str_replace:
+          template: cidr_0.cidr_8.cidr_16.0/27
+          params:
+            cidr_0:  { str_split: ['.', { get_param: cidr }, 0] }
+            cidr_8:  { str_split: ['.', { get_param: cidr }, 1] }
+            cidr_16: { str_split: ['.', { get_param: cidr }, 2] }
+      dns_nameservers: [ "1.1.1.1", "1.0.0.1" ]
+
+  filtered_router_interface:
+    type: OS::Neutron::RouterInterface
+    properties:
+      router: { get_resource: ciap_router}
+      subnet: { get_resource: filtered_subnet}
+    
+  mid_waf_servers:
+    type: mid-waf.yaml
+    properties:
+      image: { get_param: server_image }
+      flavor: { get_param: server_flavor }
+      ssh_user: { get_param: ssh_username }
+      ssh_authorized_key: { get_attr: [ ssh_key, public_key ] }
+      network: { get_resource: filtered_network }
+      subnet: { get_resource: filtered_subnet }
+
+  lb_floating:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network: { get_param: public_net }
+      port_id: { get_attr: [ mid_waf_servers, port_id ] }
+
+
+#>============================== ADMIN ZONE ==============================<#
+  admin_server:
+    type: admin.yaml
+    properties:
+      public_net: { get_param: public_net }
+      server_image: { get_param: server_image }
+      server_flavor: { get_param: server_flavor }
+      cidr: { get_param: cidr }
+      ssh_username: { get_param: ssh_username }
+      ssh_authorized_key: { get_param: ssh_public_key }
+      ssh_private_key: { get_attr: [ ssh_key, private_key ] }
+      ciap_router: { get_resource: ciap_router }
+      openstack_rc: { get_param: openstack_rc }
+      container_name: { get_param: container_name }
+      ansible_tarball: { get_param: ansible_tarball }
+  
+#>============================== PLUG ZONE ==============================<#
+  plug_server:
+    type: plug.yaml
+    properties:
+      server_image: { get_param: server_image }
+      server_flavor: { get_param: server_flavor }
+      deploy_plug: { get_param: deploy_plug }
+      cidr: { get_param: cidr }
+      ssh_username: { get_param: ssh_username }
+      ssh_key: { get_attr: [ ssh_key, public_key ] }
+      ciap_router: { get_resource: ciap_router }
+
+#>===========================================================================<#
+#>=======                           Outputs                           =======<#
+#>===========================================================================<#
+outputs:
+  admin_ip:
+    description: Floating IP address of admin server
+    value: { get_attr: [ admin_server, ip ]}
+
+  public_ip:
+    description: Floating IP address of ciap
+    value: { get_attr: [ lb_floating, floating_ip_address] }
+
+  tst:
+    value:  { get_attr: [ mid_waf_servers, server_group_id ]}

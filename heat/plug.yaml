@@ -1,0 +1,113 @@
+heat_template_version: '2018-08-31'
+
+description: CIAP Plug
+
+#>===========================================================================<#
+#>=======                         Parameters                          =======<#
+#>===========================================================================<#
+parameters:
+  server_image:
+    type: string
+    description: Id of Glance image
+
+  server_flavor:
+    type: string
+    description: Flavor desired
+
+  deploy_plug:
+    type: boolean
+    description: Deploy a plug server
+
+  cidr:
+    type: string
+    description: CIDR
+
+  ssh_username:
+    type: string
+    description: User name ssh
+
+  ssh_key:
+    type: string
+    description: ssh key
+
+  ciap_router:
+    type: string
+    description: CIAP Main router
+    
+#>===========================================================================<#
+#>=======                          Resources                          =======<#
+#>===========================================================================<#
+resources:
+  network:
+    type: OS::Neutron::Net
+    condition: { get_param: deploy_plug }
+    properties:
+      name: CIAP Plug Network
+
+  subnet:
+    type: OS::Neutron::Subnet
+    condition: { get_param: deploy_plug }
+    properties:
+      name: CIAP Plug Subnet
+      network_id: { get_resource: network }
+      cidr:
+        str_replace:
+          template: cidr_0.cidr_8.cidr_16.224/27
+          params:
+            cidr_0:  { str_split: ['.', { get_param: cidr }, 0] }
+            cidr_8:  { str_split: ['.', { get_param: cidr }, 1] }
+            cidr_16: { str_split: ['.', { get_param: cidr }, 2] }
+      dns_nameservers: [ "1.1.1.1", "1.0.0.1" ]
+
+  router_interface:
+    type: OS::Neutron::RouterInterface
+    condition: { get_param: deploy_plug }
+    properties:
+      router_id: { get_param: ciap_router }
+      subnet_id: { get_resource: subnet }
+
+  server:
+    type: OS::Nova::Server
+    condition: { get_param: deploy_plug }
+    properties:
+      name: ciap-plug
+      image: { get_param: server_image }
+      flavor: { get_param: server_flavor }
+      networks:
+        - port: { get_resource: port }
+      user_data:
+        str_replace:
+          template: |
+            #cloud-config
+            users:
+              - name: $NAME
+                sudo: ALL=(ALL) NOPASSWD:ALL # TODO DELETE
+                groups: sudo # TODO DELETE
+                ssh_authorized_keys:
+                  - $PUBLIC_KEY
+                shell: /bin/bash
+            disable_root: true
+          params:
+            $NAME: { get_param: ssh_username }
+            $PUBLIC_KEY: { get_param: ssh_key }
+      user_data_format: RAW
+      metadata: { ssh_user: { get_param: ssh_username } }
+
+  port:
+    type: OS::Neutron::Port
+    condition: { get_param: deploy_plug }
+    properties:
+      network_id: { get_resource: network }
+      fixed_ips:
+        - subnet_id: { get_resource: subnet }
+      #security_groups:
+        #- { get_resource: security_group }
+
+  security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      rules:
+         # Ingress:
+         - { remote_ip_prefix: 0.0.0.0/0, direction: ingress, protocol: tcp, port_range_min: 80,  port_range_max: 80  }
+         - { remote_ip_prefix: 0.0.0.0/0, direction: ingress, protocol: tcp, port_range_min: 443, port_range_max: 443 }
+         - { remote_ip_prefix: 0.0.0.0/0, direction: ingress, protocol: icmp }

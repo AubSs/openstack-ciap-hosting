@@ -1,0 +1,156 @@
+heat_template_version: '2018-08-31'
+
+description: CIAP Mid Waf
+
+#>===========================================================================<#
+#>=======                         Parameters                          =======<#
+#>===========================================================================<#
+parameters:
+  image:
+    type: string
+    description: Image used by the servers
+
+  flavor:
+    type: string
+    description: Flavor desired
+
+  ssh_user:
+    type: string
+    description: SSH User to connect to the servers
+
+  ssh_authorized_key:
+    type: string
+    description: SSH Key to connect to the servers
+
+  network:
+    type: string
+    description: Network used by the servers
+
+  subnet:
+    type: string
+    description: Subnet used by the servers
+
+#>===========================================================================<#
+#>=======                          Resources                          =======<#
+#>===========================================================================<#
+resources:
+  server_group_id:
+    type: OS::Heat::RandomString
+
+  mid_waf_servers:
+    type: OS::Heat::AutoScalingGroup
+    properties:
+      min_size: 1
+      max_size: 3
+      resource:
+        type: mid-waf-server.yaml
+        properties:
+          flavor: { get_param: flavor }
+          image: { get_param: image }
+          ssh_user: { get_param: ssh_user }
+          ssh_authorized_key: { get_param: ssh_authorized_key }
+          network: { get_param: network }
+          subnet: { get_param: subnet }
+          pool_id: { get_resource: pool }
+          metadata: {
+            'metering.server_group': { get_resource: server_group_id },
+            'ssh_user': { get_param: ssh_user }
+          }
+
+  mid_waf_scaleup_policy:
+    type: OS::Heat::ScalingPolicy
+    properties:
+      adjustment_type: change_in_capacity
+      auto_scaling_group_id: { get_resource: mid_waf_servers }
+      cooldown: 60
+      scaling_adjustment: 1
+
+  mid_waf_scaledown_policy:
+    type: OS::Heat::ScalingPolicy
+    properties:
+      adjustment_type: change_in_capacity
+      auto_scaling_group_id: { get_resource: mid_waf_servers }
+      cooldown: 60
+      scaling_adjustment: -1
+
+  mid_waf_cpu_alarm_high:
+    type: OS::Aodh::GnocchiAggregationByResourcesAlarm
+    properties:
+      description: Scale up if CPU > 80% for 5 minutes
+      metric: cpu_util
+      aggregation_method: mean
+      granularity: 60 # TODO Set to 300
+      evaluation_periods: 1
+      threshold: 80
+      resource_type: instance
+      comparison_operator: gt
+      alarm_actions:
+        - str_replace:
+            template: trust+url
+            params:
+              url: { get_attr: [mid_waf_scaleup_policy, signal_url] }
+      query:
+        list_join:
+          - ''
+          - - {'=': { server_group: { get_resource: server_group_id }} }
+
+  mid_waf_cpu_alarm_low:
+    type: OS::Aodh::GnocchiAggregationByResourcesAlarm
+    properties:
+      description: Scale down if CPU < 15% for 5 minutes
+      metric: cpu_util
+      aggregation_method: mean
+      granularity: 300
+      evaluation_periods: 1
+      threshold: 15
+      resource_type: instance
+      comparison_operator: lt
+      alarm_actions:
+        - str_replace:
+            template: trust+url
+            params:
+              url: { get_attr: [mid_waf_scaledown_policy, signal_url] }
+      query:
+        list_join:
+          - ''
+          - - {'=': { server_group: { get_resource: server_group_id }} }
+
+  lb:
+    type: OS::Octavia::LoadBalancer
+    properties:
+      vip_subnet: { get_param: subnet }
+      
+  listener:
+    type: OS::Octavia::Listener
+    properties:
+      loadbalancer: { get_resource: lb }
+      protocol: HTTP
+      protocol_port: 80
+      
+  pool:
+    type: OS::Octavia::Pool
+    properties:
+      listener: { get_resource: listener }
+      lb_algorithm: ROUND_ROBIN
+      protocol: HTTP
+      session_persistence:
+        type: SOURCE_IP
+        
+  lb_monitor:
+    type: OS::Octavia::HealthMonitor
+    properties:
+      pool: { get_resource: pool }
+      type: TCP
+      delay: 5
+      max_retries: 5
+      timeout: 5
+
+#>===========================================================================<#
+#>=======                           Outputs                           =======<#
+#>===========================================================================<#
+outputs:
+  port_id:
+    value: { get_attr: [ lb, vip_port_id ] }
+
+  server_group_id:
+    value: { get_resource: server_group_id }

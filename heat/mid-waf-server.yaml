@@ -1,0 +1,75 @@
+heat_template_version: '2018-08-31'
+
+description: CIAP Mid Waf Server
+
+#>===========================================================================<#
+#>=======                         Parameters                          =======<#
+#>===========================================================================<#
+parameters:
+  image:
+    type: string
+    description: Image used by the server
+
+  flavor:
+    type: string
+    description: Flavor desired
+
+  ssh_user:
+    type: string
+    description: SSH User to connect to the server
+
+  ssh_authorized_key:
+    type: string
+    description: SSH key to connect to the server
+
+  metadata:
+    type: json
+
+  network:
+    type: string
+    description: Network used by the server
+
+  subnet:
+    type: string
+    description: Subnet used by the server
+
+  pool_id:
+    type: string
+    description: Pool to contact
+
+#>===========================================================================<#
+#>=======                          Resources                          =======<#
+#>===========================================================================<#
+resources:
+  server:
+    type: OS::Nova::Server
+    properties:
+      name: ciap-mid-waf
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      metadata: { get_param: metadata }
+      networks: [{ network: { get_param: network } }]
+      user_data_format: RAW
+      user_data:
+        str_replace:
+          template: |
+            #cloud-config
+            users:
+              - name: $NAME
+                sudo: ALL=(ALL) NOPASSWD:ALL
+                groups: sudo
+                ssh_authorized_keys:
+                  - $PUBLIC_KEY
+                shell: /bin/bash
+            disable_root: true
+          params:
+            $NAME: { get_param: ssh_user }
+            $PUBLIC_KEY: { get_param: ssh_authorized_key }
+
+  member:
+    type: OS::Octavia::PoolMember
+    properties:
+      pool: { get_param: pool_id }
+      address: { get_attr: [server, first_address] }
+      protocol_port: 80
+      subnet: { get_param: subnet }

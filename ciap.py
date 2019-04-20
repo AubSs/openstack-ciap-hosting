@@ -9,6 +9,7 @@ import tarfile
 import yaml
 
 import openstack
+from openstack.orchestration.util import template_utils
 
 
 class CIAP(object):
@@ -17,17 +18,37 @@ class CIAP(object):
         self.conf = conf
         self.openstack = openstack.connection.Connection(**conf['Openstack'])
 
-        with open(self.conf['CIAP']['public_key_file'], 'r') as file:
-            self.conf['Orchestration']['ssh_public_key'] = file.read()
+    def get_openstack_rc(self):
+        conf = self.conf['Openstack']
+        rc = '# .openstackrc\n'
+        rc += 'export OS_AUTH_URL={}\n'.format(conf['auth_url'])
+        rc += 'export OS_PROJECT_ID={}\n'.format(conf['project_id'])
+        rc += 'export OS_PROJECT_NAME={}\n'.format(conf['project_name'])
+        rc += 'export OS_USER_DOMAIN_NAME={}\n'.format(conf['user_domain_name'])
+        rc += 'export OS_PROJECT_DOMAIN_NAME={}\n'.format(conf['project_domain_name'])
+        rc += 'export OS_USERNAME={}\n'.format(conf['username'])
+        rc += 'export OS_PASSWORD={}\n'.format(conf['password'])
+        rc += 'export OS_REGION_NAME={}\n'.format(conf['region_name'])
+        rc += 'export OS_INTERFACE={}\n'.format(conf['interface'])
+        rc += 'export OS_IDENTITY_API_VERSION={}\n'.format(conf['identity_api_version'])
+        return rc
 
     def New(self):
         print(f'Create {self.name} stack')
-        self._create_container(self.name, "ansible")
-        with open(self.conf['CIAP']['stack_template'], "r") as file:
-            heat_template = yaml.safe_load(file)
+        container = self._create_container(self.name, "ansible")
+        self.conf['Orchestration']['container_name'] = container['container']
+        self.conf['Orchestration']['ansible_tarball'] = container['name']
+
+        with open(self.conf['CIAP']['public_key_file'], 'r') as file:
+            self.conf['Orchestration']['ssh_public_key'] = file.read()
+
+        files, template = template_utils.get_template_contents(self.conf['CIAP']['stack_template'])
+
+        self.conf['Orchestration']['openstack_rc'] = self.get_openstack_rc()
         self.openstack.orchestration.create_stack(
             name=self.name,
-            template=heat_template,
+            template=template,
+            files=files,
             parameters=dict(self.conf['Orchestration'])
         )
 
@@ -67,8 +88,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", help="Specifie config file (default ./ciap.ini)", default="ciap.ini")
     group = parser.add_mutually_exclusive_group()
-    group.add_argument("--new",    help="Create a new CIAP")
-    group.add_argument("--delete", help="Delete a CIAP")
+    group.add_argument("--new",    metavar='<user>', help="Create a new CIAP")
+    group.add_argument("--delete", metavar='<user>', help="Delete a CIAP")
     group.add_argument("--list",   help="List all CIAP", action="store_true")
     args = parser.parse_args()
 

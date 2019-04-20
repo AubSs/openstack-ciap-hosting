@@ -2,19 +2,20 @@
 
 import argparse
 import json
+import os
 
 import openstack
 
 
 class Inventory(object):
-    def __init__(self, conf_path, public):
+    def __init__(self, public):
         self.openstack = openstack.connection.Connection(
-            auth_url='http://192.168.1.45/identity',
-            project_name='admin',
-            user_domain_name='default',
-            project_domain_name='default',
-            username='admin',
-            password='xxx'
+            auth_url=os.environ['OS_AUTH_URL'],
+            project_name=os.environ['OS_PROJECT_NAME'],
+            user_domain_name=os.environ['OS_USER_DOMAIN_NAME'],
+            project_domain_name=os.environ['OS_PROJECT_DOMAIN_NAME'],
+            username=os.environ['OS_USERNAME'],
+            password=os.environ['OS_PASSWORD']
         )
         self.data = {'_meta': {'hostvars': {}}}
 
@@ -23,8 +24,8 @@ class Inventory(object):
             group = self.data.setdefault(server['name'], [])
             group.append(server['id'])
             server_obj = self.data['_meta']['hostvars'].setdefault(server['id'], {'openstack': server})
-            server_obj['ansible_host'] = self.get_ip_from_server(server, public=True)
-            server_obj['ansible_user'] = 'centos'
+            server_obj['ansible_host'] = self.get_ip_from_server(server, public=public)
+            server_obj['ansible_user'] = server.get("ssh_user", "ciap")
 
     def get_ip_from_server(self, server, public=False, ip_version=4):
         ip_type = 'floating' if public else 'fixed'
@@ -52,7 +53,7 @@ if __name__ == "__main__":
     group.add_argument('--host', help='List details about the specific host')
     args = parser.parse_args()
 
-    inventory = Inventory('lol', args.public)
+    inventory = Inventory(args.public)
     if args.list:
         inventory.list()
     elif args.host:
