@@ -1,0 +1,16 @@
+---
+
+- import_tasks: softwares.yml
+  tags:
+    - init
+    - mid_waf
+
+- import_tasks: selinux.yml
+  tags:
+    - init
+    - mid_waf
+
+- import_tasks: init/system.yml
+  tags:
+    - init
+    - mid_waf

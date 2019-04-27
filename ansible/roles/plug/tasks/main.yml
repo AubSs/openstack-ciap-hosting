@@ -20,7 +20,7 @@
 - name: Create Self-Signed Certificate
   shell: openssl req -x509 -newkey rsa:4096 -keyout /etc/ssl/certs/ss-key.pem -out /etc/ssl/certs/ss-cert.pem -nodes -days 365 -subj '/CN=localhost'
 
-- name: Copy nginx configuration
+- name: Nginx configuration
   template:
     src: nginx-conf.j2
     dest: /etc/nginx/nginx.conf
@@ -31,7 +31,7 @@
   run_once: true
   notify: Reload nginx daemon
 
-- name: Copy nginx vhost
+- name: Nginx vhost
   template:
     src: nginx-vhost.j2
     dest: /etc/nginx/conf.d/plug.conf

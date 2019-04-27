@@ -1,0 +1,28 @@
+--
+
+- name: Disable httpd daemon
+  systemd:
+    name: httpd
+    enabled: no
+    state: stopped
+    no_block: yes
+    force: yes
+  ignore_errors: true
+
+- name: Disable postfix daemon
+  systemd:
+    name: postfix
+    enabled: no
+    state: stopped
+    no_block: yes
+    force: yes
+  ignore_errors: true
+
+- name: Disable firewalld daemon
+  systemd:
+    name: firewalld
+    enabled: no
+    state: stopped
+    no_block: yes
+    force: yes
+  ignore_errors: true
