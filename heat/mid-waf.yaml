@@ -121,14 +121,14 @@ resources:
     type: OS::Octavia::LoadBalancer
     properties:
       vip_subnet: { get_param: subnet }
-      
+
   listener:
     type: OS::Octavia::Listener
     properties:
       loadbalancer: { get_resource: lb }
       protocol: HTTP
       protocol_port: 80
-      
+
   pool:
     type: OS::Octavia::Pool
     properties:
@@ -137,7 +137,7 @@ resources:
       protocol: HTTP
       session_persistence:
         type: SOURCE_IP
-        
+
   lb_monitor:
     type: OS::Octavia::HealthMonitor
     properties:
@@ -156,3 +156,39 @@ outputs:
 
   server_group_id:
     value: { get_resource: server_group_id }
+
+  mid_waf_cpu_alarm_low_signal:
+    value: { get_attr: [mid_waf_scaledown_policy, signal_url] }
+
+  mid_waf_cpu_alarm_high_signal:
+    value: { get_attr: [mid_waf_scaleup_policy, signal_url] }
+
+  mid_waf_cpu_alarm_low_alarm:
+    value: { get_attr: [mid_waf_scaledown_policy, alarm_url] }
+
+  mid_waf_cpu_alarm_high_alarm:
+    value: { get_attr: [mid_waf_scaleup_policy, alarm_url] }
+
+  server_group_id:
+    value: { get_resource: server_group_id }
+
+  gnocchi_query:
+    value:
+      str_replace:
+        template: >
+          gnocchi measures aggregation --resource-type instance
+          --query 'server_group="stackval"'
+          --granularity 300 --aggregation mean -m cpu_util
+        params:
+          stackval: { get_resource: server_group_id }
+    description: >
+      This is a Gnocchi query for statistics on the cpu_util measurements about
+      OS::Nova::Server instances in this stack. The --resource-type select the
+      type of Gnocchi resource. The --query parameter filters resources
+      according to its attributes. When a VM's metadata includes an item of the
+      form metering.server_group=X, the corresponding Gnocchi resource has a
+      attribute named server_group that can queried with 'server_group="X"' In
+      this case the nested stacks give their VMs metadata that is passed as a
+      nested stack parameter, and this stack passes a metadata of the form
+      metering.server_group=X, where X is this stack's ID.
+
