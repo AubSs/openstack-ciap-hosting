@@ -58,7 +58,9 @@ resources:
     type: OS::Nova::KeyPair
     properties:
       name:
-        list_join: ['-', ['ciap', { get_param: 'OS::stack_name' }, { str_split: ['-', { get_param: 'OS::stack_id' }, 0] }]]
+        list_join:
+          - '-'
+          - ['ciap', { get_param: 'OS::stack_name' }, { str_split: ['-', { get_param: 'OS::stack_id' }, 0] }]]
       save_private_key: True
 
 #>================================= ROUTER ==================================<#
