@@ -1,0 +1,43 @@
+---
+
+- name: Install nginx
+  package:
+    name: nginx
+    state: present
+  tags:
+    - centos
+
+- name: Install openssl
+  package:
+    name: openssl
+    state: present
+  tags:
+    - centos
+
+- name: Generate Strong Dh (Diffie-Hellman)
+  shell: openssl dhparam -out /etc/ssl/certs/dhparam.pem 2048
+
+- name: Create Self-Signed Certificate
+  shell: openssl req -x509 -newkey rsa:4096 -keyout /etc/ssl/certs/ss-key.pem -out /etc/ssl/certs/ss-cert.pem -nodes -days 365 -subj '/CN=localhost'
+
+- name: Copy nginx configuration
+  template:
+    src: nginx-conf.j2
+    dest: /etc/nginx/nginx.conf
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+  run_once: true
+  notify: Reload nginx daemon
+
+- name: Copy nginx vhost
+  template:
+    src: nginx-vhost.j2
+    dest: /etc/nginx/conf.d/plug.conf
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+  run_once: true
+  notify: Reload nginx daemon

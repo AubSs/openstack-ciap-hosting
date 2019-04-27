@@ -1,0 +1,15 @@
+---
+
+- name: Install epel-release
+  package:
+    name: epel-release
+    state: present
+  tags:
+    - centos
+
+- name: Install emacs
+  package:
+    name: emacs-nox
+    state: present
+  tags:
+    - centos

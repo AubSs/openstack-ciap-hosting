@@ -30,6 +30,10 @@ parameters:
     type: string
     description: Subnet used by the servers
 
+  metadata:
+    default: {}
+    type: json
+
 #>===========================================================================<#
 #>=======                          Resources                          =======<#
 #>===========================================================================<#
@@ -51,11 +55,12 @@ resources:
           ssh_authorized_key: { get_param: ssh_authorized_key }
           network: { get_param: network }
           subnet: { get_param: subnet }
-          pool_id: { get_resource: pool }
-          metadata: {
+          pool_http: { get_resource: pool_http }
+          pool_https: { get_resource: pool_https }
+          metadata: { map_merge: [{
             'metering.server_group': { get_resource: server_group_id },
             'ssh_user': { get_param: ssh_user }
-          }
+          }, { get_param: metadata } ]}
 
   mid_waf_scaleup_policy:
     type: OS::Heat::ScalingPolicy
@@ -122,27 +127,52 @@ resources:
     properties:
       vip_subnet: { get_param: subnet }
 
-  listener:
+  listener_http:
     type: OS::Octavia::Listener
     properties:
       loadbalancer: { get_resource: lb }
       protocol: HTTP
       protocol_port: 80
 
-  pool:
+  pool_http:
     type: OS::Octavia::Pool
     properties:
-      listener: { get_resource: listener }
+      listener: { get_resource: listener_http }
       lb_algorithm: ROUND_ROBIN
       protocol: HTTP
       session_persistence:
         type: SOURCE_IP
 
-  lb_monitor:
+  lb_monitor_http:
     type: OS::Octavia::HealthMonitor
     properties:
-      pool: { get_resource: pool }
-      type: TCP
+      pool: { get_resource: pool_http }
+      type: HTTP
+      delay: 5
+      max_retries: 5
+      timeout: 5
+
+  listener_https:
+    type: OS::Octavia::Listener
+    properties:
+      loadbalancer: { get_resource: lb }
+      protocol: HTTPS
+      protocol_port: 443
+
+  pool_https:
+    type: OS::Octavia::Pool
+    properties:
+      listener: { get_resource: listener_https }
+      lb_algorithm: ROUND_ROBIN
+      protocol: HTTPS
+      session_persistence:
+        type: SOURCE_IP
+
+  lb_monitor_https:
+    type: OS::Octavia::HealthMonitor
+    properties:
+      pool: { get_resource: pool_https }
+      type: HTTPS
       delay: 5
       max_retries: 5
       timeout: 5
@@ -153,42 +183,4 @@ resources:
 outputs:
   port_id:
     value: { get_attr: [ lb, vip_port_id ] }
-
-  server_group_id:
-    value: { get_resource: server_group_id }
-
-  mid_waf_cpu_alarm_low_signal:
-    value: { get_attr: [mid_waf_scaledown_policy, signal_url] }
-
-  mid_waf_cpu_alarm_high_signal:
-    value: { get_attr: [mid_waf_scaleup_policy, signal_url] }
-
-  mid_waf_cpu_alarm_low_alarm:
-    value: { get_attr: [mid_waf_scaledown_policy, alarm_url] }
-
-  mid_waf_cpu_alarm_high_alarm:
-    value: { get_attr: [mid_waf_scaleup_policy, alarm_url] }
-
-  server_group_id:
-    value: { get_resource: server_group_id }
-
-  gnocchi_query:
-    value:
-      str_replace:
-        template: >
-          gnocchi measures aggregation --resource-type instance
-          --query 'server_group="stackval"'
-          --granularity 300 --aggregation mean -m cpu_util
-        params:
-          stackval: { get_resource: server_group_id }
-    description: >
-      This is a Gnocchi query for statistics on the cpu_util measurements about
-      OS::Nova::Server instances in this stack. The --resource-type select the
-      type of Gnocchi resource. The --query parameter filters resources
-      according to its attributes. When a VM's metadata includes an item of the
-      form metering.server_group=X, the corresponding Gnocchi resource has a
-      attribute named server_group that can queried with 'server_group="X"' In
-      this case the nested stacks give their VMs metadata that is passed as a
-      nested stack parameter, and this stack passes a metadata of the form
-      metering.server_group=X, where X is this stack's ID.
 

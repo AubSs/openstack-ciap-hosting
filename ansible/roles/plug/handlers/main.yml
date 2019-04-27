@@ -1,0 +1,10 @@
+---
+
+- name: Reload nginx daemon
+  systemd:
+    name: nginx
+    daemon_reload: yes
+    enabled: yes
+    state: reloaded
+    no_block: yes
+  ignore_errors: true

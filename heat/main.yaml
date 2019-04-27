@@ -18,7 +18,7 @@ parameters:
 
   server_flavor:
     type: string
-    default: m1.small
+    default: ds2G
     description: Flavor desired
 
   deploy_plug:
@@ -60,7 +60,7 @@ resources:
       name:
         list_join:
           - '-'
-          - ['ciap', { get_param: 'OS::stack_name' }, { str_split: ['-', { get_param: 'OS::stack_id' }, 0] }]]
+          - ['ciap', { get_param: 'OS::stack_name' }, { str_split: ['-', { get_param: 'OS::stack_id' }, 0] }]
       save_private_key: True
 
 #>================================= ROUTER ==================================<#
@@ -106,6 +106,9 @@ resources:
       ssh_authorized_key: { get_attr: [ ssh_key, public_key ] }
       network: { get_resource: filtered_network }
       subnet: { get_resource: filtered_subnet }
+      metadata: {
+        'next_ip': { get_attr: [ plug_server, ip ]}
+      }
 
   lb_floating:
     type: OS::Neutron::FloatingIP
@@ -153,21 +156,3 @@ outputs:
   public_ip:
     description: Floating IP address of ciap
     value: { get_attr: [ lb_floating, floating_ip_address] }
-
-  mid_waf_cpu_alarm_low_signal:
-    value: { get_attr: [mid_waf_servers, mid_waf_cpu_alarm_low_signal] }
-
-  mid_waf_cpu_alarm_high_signal:
-    value: { get_attr: [mid_waf_servers, mid_waf_cpu_alarm_high_signal] }
-
-  mid_waf_cpu_alarm_low_alarm:
-    value: { get_attr: [mid_waf_servers, mid_waf_cpu_alarm_low_alarm] }
-
-  mid_waf_cpu_alarm_high_alarm:
-    value: { get_attr: [mid_waf_servers, mid_waf_cpu_alarm_high_alarm] }
-
-  server_group_id:
-    value: { get_attr: [mid_waf_servers, server_group_id] }
-
-  gnocchi_query:
-    value: { get_attr: [mid_waf_servers, gnocchi_query] }

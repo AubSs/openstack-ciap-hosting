@@ -8,7 +8,7 @@ description: CIAP Admin
 parameters:
   public_net:
     type: string
-    
+
   server_image:
     type: string
     description: Id of Glance image
@@ -48,7 +48,7 @@ parameters:
   ciap_router:
     type: string
     description: CIAP Main router
-    
+
 #>===========================================================================<#
 #>=======                          Resources                          =======<#
 #>===========================================================================<#
@@ -109,11 +109,11 @@ resources:
 
             # Secure SSH
             sed -i 's/#PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config
-            
+
             # Install packages [DISTRO = distro name & DISTRO_V = distro version]
             DISTRO=$(grep "^ID=" /etc/os-release |cut -d "=" -f 2 | sed -e 's/^"//' -e 's/"$//')
             DISTRO_V=$(grep "^VERSION_ID=" /etc/os-release |cut -d "=" -f 2 | sed -e 's/^"//' -e 's/"$//')
-            
+
             if [[ "$DISTRO" = "centos" ]]; then
                 yum install -y epel-release
                 yum install -y vim-enhanced emacs-nox nano
@@ -121,7 +121,7 @@ resources:
                 yum install -y gcc openssl-devel bzip2
                 yum install -y python36 python36-pip python36-wheel python36-devel python36-virtualenv
             fi
-            
+
             if [[ "$DISTRO" = "ubuntu" ]] || [[ "$DISTRO" = "debian" ]] ; then
                 apt install -y vim-enhanced emacs-nox nano
                 apt install -y htop wget ansible
@@ -140,6 +140,9 @@ resources:
             openstack object save $CONTAINER $ANSIBLE_TARBALL
             tar -jxvf $ANSIBLE_TARBALL
             rm $ANSIBLE_TARBALL
+            chown -R $USERNAME:$USERNAME $ANSIBLE_TARBALL
+            cd $ANSIBLE_TARBALL
+            ansible-playbook main.yml > ciap.log
 
           params:
             $USERNAME: { get_param: ssh_username }
