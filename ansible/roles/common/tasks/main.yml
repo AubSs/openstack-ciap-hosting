@@ -1,23 +1,17 @@
 ---
 
-- name: Remove httpd software 
-  package:
-    name: httpd
-    state: absent
-  notify: Disable httpd daemon
-
-- name: Remove firewalld software 
+- name: Remove firewalld software
   package:
     name: firewalld
     state: absent
-   notify: Disable firewalld daemon
+  notify: Disable firewalld daemon
 
-- name: Remove postfix software 
+- name: Remove postfix software
   package:
     name: postfix
     state: absent
-   notify: Disable postfix daemon
-   
+  notify: Disable postfix daemon
+
 - name: Install epel-release
   package:
     name: epel-release

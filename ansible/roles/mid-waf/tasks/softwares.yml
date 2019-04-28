@@ -1,7 +1,7 @@
 ---
 
 - name: Groupinstall Development tools
-  shell: yum groupinstall 'Development tools'
+  shell: yum groupinstall -y 'Development tools'
 
 - name: Install Development Tools
   package:

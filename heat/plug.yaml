@@ -14,13 +14,13 @@ parameters:
     type: string
     description: Flavor desired
 
-  deploy_plug:
-    type: boolean
-    description: Deploy a plug server
-
   cidr:
     type: string
     description: CIDR
+
+  metadata:
+    default: {}
+    type: json
 
   ssh_username:
     type: string
@@ -34,25 +34,27 @@ parameters:
     type: string
     description: CIAP Main router
 
+  ciap_name:
+    type: string
+    description: CIAP Name
+
 #>===========================================================================<#
 #>=======                          Resources                          =======<#
 #>===========================================================================<#
 resources:
   network:
     type: OS::Neutron::Net
-    condition: { get_param: deploy_plug }
     properties:
       name: CIAP Plug Network
 
   subnet:
     type: OS::Neutron::Subnet
-    condition: { get_param: deploy_plug }
     properties:
       name: CIAP Plug Subnet
       network_id: { get_resource: network }
       cidr:
         str_replace:
-          template: cidr_0.cidr_8.cidr_16.224/27
+          template: cidr_0.cidr_8.cidr_16.128/27
           params:
             cidr_0:  { str_split: ['.', { get_param: cidr }, 0] }
             cidr_8:  { str_split: ['.', { get_param: cidr }, 1] }
@@ -61,16 +63,17 @@ resources:
 
   router_interface:
     type: OS::Neutron::RouterInterface
-    condition: { get_param: deploy_plug }
     properties:
       router_id: { get_param: ciap_router }
       subnet_id: { get_resource: subnet }
 
   server:
     type: OS::Nova::Server
-    condition: { get_param: deploy_plug }
     properties:
-      name: ciap-plug
+      name:
+        list_join:
+          - '-'
+          - ['ciap', { get_param: ciap_name }, 'plug']
       image: { get_param: server_image }
       flavor: { get_param: server_flavor }
       networks:
@@ -91,11 +94,17 @@ resources:
             $NAME: { get_param: ssh_username }
             $PUBLIC_KEY: { get_param: ssh_key }
       user_data_format: RAW
-      metadata: { ssh_user: { get_param: ssh_username } }
+      metadata: {
+        map_merge: [
+          { 'ssh_user': { get_param: ssh_username } },
+          { 'ciap': { get_param: ciap_name } },
+          { 'instance': 'plug' },
+          { get_param: metadata }
+        ]
+      }
 
   port:
     type: OS::Neutron::Port
-    condition: { get_param: deploy_plug }
     properties:
       network_id: { get_resource: network }
       fixed_ips:
@@ -117,4 +126,4 @@ resources:
 #>===========================================================================<#
 outputs:
   ip:
-    value: { get_attr: [server, networks, net0, 0]}
+    value: { get_attr: [port, fixed_ips, 0, ip_address]}

@@ -17,15 +17,18 @@ class Inventory(object):
             username=os.environ['OS_USERNAME'],
             password=os.environ['OS_PASSWORD']
         )
+        self.stack_name = os.environ['STACK_NAME']
         self.data = {'_meta': {'hostvars': {}}}
 
         generator = self.openstack.compute.servers()
         for server in generator:
-            group = self.data.setdefault(server['name'], [])
+            if not 'ciap' in server['metadata'] or server['metadata']['ciap'] != self.stack_name:
+                continue
+            group = self.data.setdefault(server['metadata']['instance'], [])
             group.append(server['id'])
             server_obj = self.data['_meta']['hostvars'].setdefault(server['id'], {'openstack': server})
             server_obj['ansible_host'] = self.get_ip_from_server(server, public=public)
-            server_obj['ansible_user'] = server.get("ssh_user", "ciap")
+            server_obj['ansible_user'] = server['metadata'].get("ssh_user", None)
 
     def get_ip_from_server(self, server, public=False, ip_version=4):
         ip_type = 'floating' if public else 'fixed'

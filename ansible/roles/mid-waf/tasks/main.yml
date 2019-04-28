@@ -10,7 +10,7 @@
     - init
     - mid_waf
 
-- import_tasks: init/system.yml
+- import_tasks: system.yml
   tags:
     - init
     - mid_waf

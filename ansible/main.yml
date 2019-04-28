@@ -1,15 +1,17 @@
 ---
 
-#- name: Setup plug
-#  hosts: ciap-plug
-#  become: yes
-#  roles:
-#    - common
-#    - plug
-
-- name: Setup Mid Waf
-  hosts: ciap-mid-waf
+- name: Setup plug
+  hosts: plug
   become: yes
+  gather_facts: yes
+  roles:
+    - common
+    - plug
+    
+- name: Setup Mid Waf
+  hosts: mid-waf
+  become: yes
+  gather_facts: yes
   roles:
     - common
     - mid-waf

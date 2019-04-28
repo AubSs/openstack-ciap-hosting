@@ -31,6 +31,7 @@ class CIAP(object):
         rc += 'export OS_REGION_NAME={}\n'.format(conf['region_name'])
         rc += 'export OS_INTERFACE={}\n'.format(conf['interface'])
         rc += 'export OS_IDENTITY_API_VERSION={}\n'.format(conf['identity_api_version'])
+        rc += 'export STACK_NAME={}\n'.format(self.name)
         return rc
 
     def New(self):

@@ -1,6 +1,6 @@
 heat_template_version: '2018-08-31'
 
-description: CIAP Mid Waf Server
+description: CIAP Metrology Server
 
 #>===========================================================================<#
 #>=======                         Parameters                          =======<#
@@ -23,6 +23,7 @@ parameters:
     description: SSH key to connect to the server
 
   metadata:
+    default: {}
     type: json
 
   network:
@@ -33,13 +34,9 @@ parameters:
     type: string
     description: Subnet used by the server
 
-  pool_http:
+  ciap_name:
     type: string
-    description: HTTP Pool to contact
-
-  pool_https:
-    type: string
-    description: HTTPS Pool to contact
+    description: CIAP Name
 
 #>===========================================================================<#
 #>=======                          Resources                          =======<#
@@ -48,11 +45,22 @@ resources:
   server:
     type: OS::Nova::Server
     properties:
-      name: ciap-mid-waf
+      name:
+        list_join:
+          - '-'
+          - ['ciap', { get_param: ciap_name }, 'low-met']
       image: { get_param: image }
       flavor: { get_param: flavor }
-      metadata: { get_param: metadata }
-      networks: [{ network: { get_param: network } }]
+      metadata: {
+        map_merge: [
+          { 'ssh_user': { get_param: ssh_user } },
+          { 'ciap': { get_param: ciap_name } },
+          { 'instance': 'low-met' },
+          { get_param: metadata }
+        ]
+      }
+      networks:
+        - port: { get_resource: port }
       user_data_format: RAW
       user_data:
         str_replace:
@@ -70,18 +78,27 @@ resources:
             $NAME: { get_param: ssh_user }
             $PUBLIC_KEY: { get_param: ssh_authorized_key }
 
-  member_http:
-    type: OS::Octavia::PoolMember
+  port:
+    type: OS::Neutron::Port
     properties:
-      pool: { get_param: pool_http }
-      address: { get_attr: [server, first_address] }
-      protocol_port: 80
-      subnet: { get_param: subnet }
+      network_id: { get_param: network }
+      fixed_ips:
+        - subnet_id: { get_param: subnet }
+      #security_groups:
+        #- { get_resource: security_group }
 
-  member_https:
-    type: OS::Octavia::PoolMember
+  security_group:
+    type: OS::Neutron::SecurityGroup
     properties:
-      pool: { get_param: pool_https }
-      address: { get_attr: [server, first_address] }
-      protocol_port: 443
-      subnet: { get_param: subnet }
+      rules:
+         # Ingress:
+         - { remote_ip_prefix: 0.0.0.0/0, direction: ingress, protocol: tcp, port_range_min: 80,  port_range_max: 80  }
+         - { remote_ip_prefix: 0.0.0.0/0, direction: ingress, protocol: tcp, port_range_min: 443, port_range_max: 443 }
+         - { remote_ip_prefix: 0.0.0.0/0, direction: ingress, protocol: icmp }
+
+#>===========================================================================<#
+#>=======                           Outputs                           =======<#
+#>===========================================================================<#
+outputs:
+  ip:
+    value: { get_attr: [port, fixed_ips, 0, ip_address]}

@@ -49,6 +49,10 @@ parameters:
     type: string
     description: CIAP Main router
 
+  ciap_name:
+    type: string
+    description: CIAP Name
+
 #>===========================================================================<#
 #>=======                          Resources                          =======<#
 #>===========================================================================<#
@@ -65,7 +69,7 @@ resources:
       network_id: { get_resource: network }
       cidr:
         str_replace:
-          template: cidr_0.cidr_8.cidr_16.192/27
+          template: cidr_0.cidr_8.cidr_16.96/27
           params:
             cidr_0:  { str_split: ['.', { get_param: cidr }, 0] }
             cidr_8:  { str_split: ['.', { get_param: cidr }, 1] }
@@ -110,22 +114,11 @@ resources:
             # Secure SSH
             sed -i 's/#PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config
 
-            # Install packages [DISTRO = distro name & DISTRO_V = distro version]
-            DISTRO=$(grep "^ID=" /etc/os-release |cut -d "=" -f 2 | sed -e 's/^"//' -e 's/"$//')
-            DISTRO_V=$(grep "^VERSION_ID=" /etc/os-release |cut -d "=" -f 2 | sed -e 's/^"//' -e 's/"$//')
-
-            if [[ "$DISTRO" = "centos" ]]; then
-                yum install -y epel-release
-                yum install -y vim-enhanced emacs-nox nano
-                yum install -y htop wget ansible
-                yum install -y gcc openssl-devel bzip2
-                yum install -y python36 python36-pip python36-wheel python36-devel python36-virtualenv
-            fi
-
-            if [[ "$DISTRO" = "ubuntu" ]] || [[ "$DISTRO" = "debian" ]] ; then
-                apt install -y vim-enhanced emacs-nox nano
-                apt install -y htop wget ansible
-            fi
+            yum install -y epel-release
+            yum install -y vim-enhanced emacs-nox nano
+            yum install -y htop wget tee ansible tree
+            yum install -y gcc openssl-devel bzip2
+            yum install -y python36 python36-pip python36-wheel python36-devel python36-virtualenv
 
             pip3 install python-openstackclient
 
@@ -137,12 +130,18 @@ resources:
             fi' >> .bashrc
             source .openstackrc
 
+            # Download ansible playbook
             openstack object save $CONTAINER $ANSIBLE_TARBALL
             tar -jxvf $ANSIBLE_TARBALL
             rm $ANSIBLE_TARBALL
-            chown -R $USERNAME:$USERNAME $ANSIBLE_TARBALL
-            cd $ANSIBLE_TARBALL
-            ansible-playbook main.yml > ciap.log
+            chown -R $USERNAME:$USERNAME $ANSIBLE_FOLDER
+            cd $ANSIBLE_FOLDER
+
+            # Setup ansible cron (every 5 min)
+            ANSIBLE_LOG_PATH=/var/log/ciap
+            mkdir $ANSIBLE_LOG_PATH
+            chown -R $USERNAME $ANSIBLE_LOG_PATH
+            { crontab -l -u $USERNAME 2>/dev/null; echo '*/5 * * * * . /home/$USERNAME/.openstackrc; sh /home/$USERNAME/$ANSIBLE_FOLDER/ciap.cron'; } | crontab -u $USERNAME -
 
           params:
             $USERNAME: { get_param: ssh_username }
@@ -150,6 +149,7 @@ resources:
             $OPENSTACK_RC: { get_param: openstack_rc }
             $CONTAINER: { get_param: container_name }
             $ANSIBLE_TARBALL: { get_param: ansible_tarball }
+            $ANSIBLE_FOLDER: "ansible"
 
   server_boot:
     type: OS::Heat::MultipartMime
@@ -161,7 +161,10 @@ resources:
   server:
     type: OS::Nova::Server
     properties:
-      name: ciap-admin
+      name:
+        list_join:
+          - '-'
+          - ['ciap', { get_param: ciap_name }, 'admin']
       image: { get_param: server_image }
       flavor: { get_param: server_flavor }
       networks:
