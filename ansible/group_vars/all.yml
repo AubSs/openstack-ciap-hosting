@@ -1,0 +1,38 @@
+---
+
+v_certificates_path: "/etc/ssl"
+v_clamd_temporary_directory: "/var/run/clamd.scan"
+v_clamd_listening_port: 3310
+v_clamd_listening_address: "127.0.0.1"
+v_havp_root_directory: "/opt/havp"
+v_suricata_root_directory: "/opt/suricata"
+v_external_listening_address: "127.0.0.1"
+v_suricata_listening_address: "127.0.0.2"
+
+v_haproxy_stats_listening_port: 1936
+v_haproxy_stats_listening_ip: "127.0.0.1"
+v_haproxy_stats_uri: "haproxy-stats"
+
+v_metrology_influxdb_host: "localhost"
+v_metrology_grafana_host: "localhost"
+v_metrology_grafana_port: 3000
+
+# Same as grafana port
+v_mingtree_port: 3000
+v_metrology_influxdb_port: 8086
+v_metrology_tcp_socket_port: 8094
+v_metrology_influxdb_db: "octane"
+v_metrology_influxdb_user: "octane"
+v_metrology_influxdb_password: "octane"
+v_metrology_logstash_port: 5044
+v_healthcheck_port: 65000
+v_grafana_admin: "admin"
+v_grafana_admin_password: "admin"
+v_influxdb_admin: "admin"
+v_influxdb_admin_password: "admin"
+v_influxdb_logstash_writer: "logstash_writer"
+v_influxdb_logstash_writer_password: "logstash_writer_password"
+v_influxdb_grafana_reader: "grafana_reader"
+v_influxdb_grafana_reader_password: "grafana_reader_password"
+v_vpn_port: 443
+v_log_path: "/var/log"
