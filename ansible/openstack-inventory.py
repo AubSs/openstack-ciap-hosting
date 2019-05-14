@@ -22,7 +22,7 @@ class Inventory(object):
 
         generator = self.openstack.compute.servers()
         for server in generator:
-            if not 'ciap' in server['metadata'] or server['metadata']['ciap'] != self.stack_name:
+            if 'ciap' not in server['metadata'] or server['metadata']['ciap'] != self.stack_name:
                 continue
             group = self.data.setdefault(server['metadata']['instance'], [])
             group.append(server['id'])

@@ -26,6 +26,8 @@
 
 There are several layers (from the most exposed -Internet- to the less exposed -Internal-):
 
+[![ARCHITECTURE](docs/archi.png)]()
+
 * redundant load-balancers
 * redundant filtering layer
 * redundant reverse-proxies
@@ -117,3 +119,6 @@ Get latest openstack sdk
 ```sh
 sudo pip3 install git+https://github.com/openstack/openstacksdk.git
 ```
+
+
+[![HLD](docs/soft.png)]()

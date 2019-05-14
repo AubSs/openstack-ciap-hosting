@@ -3,17 +3,14 @@
 import argparse
 import configparser
 import io
-import json
-import os
 import tarfile
-import yaml
 
 import openstack
 from openstack.orchestration.util import template_utils
 
 
 class CIAP(object):
-    def __init__(self, name, conf):
+    def __init__(self, name: str, conf: dict):
         self.name = name
         self.conf = conf
         self.openstack = openstack.connection.Connection(**conf['Openstack'])
@@ -61,7 +58,7 @@ class CIAP(object):
     def List(self):
         print("list ciap")
 
-    def _create_container(self, name, *files):
+    def _create_container(self, name: str, *files):
         # Compress all files
         compress_algo = 'bz2'
         buffer = io.BytesIO()
@@ -78,7 +75,7 @@ class CIAP(object):
             data=buffer.getvalue()
         )
 
-    def _delete_container(self, name):
+    def _delete_container(self, name: str):
         objects = self.openstack.object_store.objects(name)
         for object in objects:
             self.openstack.object_store.delete_object(object.name, container=name)
