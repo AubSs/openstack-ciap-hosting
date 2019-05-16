@@ -1,0 +1,28 @@
+---
+
+- name: Install haproxy
+  package:
+    name: haproxy
+    state: present
+
+- name: Add healtcheck answer configuration file to haproxy directory
+  copy:
+    src: "haproxy_healthcheck"
+    dest: "/etc/haproxy/200_http_ok"
+    owner: root
+    backup: yes
+    force: yes
+    group: root
+    mode: 0644
+  notify: Start haproxy daemon
+
+- name: Add configuration file to haproxy directory
+  template:
+    src: "haproxy.j2"
+    dest: "/etc/haproxy/haproxy.cfg"
+    owner: root
+    backup: yes
+    force: yes
+    group: root
+    mode: 0644
+  notify: Start haproxy daemon

@@ -1,0 +1,5 @@
+---
+# vars file for openvpn
+openvpn_config_file: "openvpn_server"
+openvpn_user: "openvpn"
+openvpn_group: "openvpn"

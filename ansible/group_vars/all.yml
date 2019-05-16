@@ -9,9 +9,10 @@ v_suricata_root_directory: "/opt/suricata"
 v_external_listening_address: "127.0.0.1"
 v_suricata_listening_address: "127.0.0.2"
 
+v_healthcheck_port: 65000
 v_haproxy_stats_listening_port: 1936
 v_haproxy_stats_listening_ip: "127.0.0.1"
-v_haproxy_stats_uri: "haproxy-stats"
+v_haproxy_stats_uri: "stats"
 
 v_metrology_influxdb_host: "localhost"
 v_metrology_grafana_host: "localhost"
@@ -25,7 +26,6 @@ v_metrology_influxdb_db: "octane"
 v_metrology_influxdb_user: "octane"
 v_metrology_influxdb_password: "octane"
 v_metrology_logstash_port: 5044
-v_healthcheck_port: 65000
 v_grafana_admin: "admin"
 v_grafana_admin_password: "admin"
 v_influxdb_admin: "admin"

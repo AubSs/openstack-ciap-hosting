@@ -1,27 +1,29 @@
 ---
 
-- name: Remove firewalld software
-  package:
-    name: firewalld
-    state: absent
-  notify: Disable firewalld daemon
+- name: Add domains
+  include_vars: "{{ item }}"
+  with_first_found:
+    - files:
+        - "domains.yml"
+      skip: true
+  tags: [always]
 
-- name: Remove postfix software
-  package:
-    name: postfix
-    state: absent
-  notify: Disable postfix daemon
-
-- name: Install epel-release
-  package:
-    name: epel-release
-    state: present
+- import_tasks: init/softwares.yml
   tags:
-    - centos
+   - init
+   - common
 
-- name: Install emacs
-  package:
-    name: emacs-nox
-    state: present
+- import_tasks: init/selinux.yml
   tags:
-    - centos
+   - init
+   - common
+
+- import_tasks: init/haproxy_healthcheck.yml
+  tags:
+   - init
+   - common
+
+- import_tasks: init/ssl.yml
+  tags:
+   - init
+   - common

@@ -1,0 +1,125 @@
+#!/bin/bash
+
+# 20180907: Eric BOUTEVILLE
+
+
+usage()
+{
+  echo "Usage : $0 (-c) -s <stack> (-f <full path to result file>) (-p <full path to log>) (-i <ec2 instance inventory ID>)"
+  echo "CLI API for OCTANE"
+  echo "Program name = ansible tag"
+  echo "./init -s octanetst"
+  echo "Then the ansible playbook will use all task with init tag"
+  echo "If -c option set, then an ansible check will be performed"
+  echo "If -i option set, then ansible will be done on the EC2 inventory ID"
+  echo "If -f option set, then ansible result will be written to <full path to result file>"
+  echo "Default: /tmp/${0##*/}-<stack>.XXXXXX.res"
+  echo "If -p option set, then ansible output will be written to <full path to log file>"
+  echo "Default: /tmp/${0##*/}-<stack>.XXXXXX.log"
+  echo "   Ex : $0 -s octane -f /tmp/${0##*/}-<stack>"
+  echo "List of functions:"
+  echo " - init"
+  echo " - common"
+  echo " - up_lb"
+  echo " - mid_waf"
+  echo " - mid_vpn"
+  echo " - low_fw"
+  echo " - low_met"
+  echo " - revokedomain"
+  echo " - grantdomain"
+  echo " - grantvpnclient"
+  echo " - revokevpnclient"
+}
+
+while getopts "cp:f:s:i:" o; do
+    case "${o}" in
+        c)
+            c=" --check "
+            ;;
+        p)
+            p=${OPTARG}
+            ;;
+        s)
+            s=${OPTARG}
+            ;;
+        f)
+            f=${OPTARG}
+            ;;
+        i)
+            i=${OPTARG}
+            ;;
+
+        *)
+            usage
+            exit 2
+            ;;
+    esac
+done
+
+shift $((OPTIND-1))
+
+
+if [[ "${0##*/}" =~ ^"api"* ]]
+then
+# Change working dir (does not restore)
+    declare -r SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+
+# Sync DynamoDB
+    cd ${SCRIPT_DIR}/api/src
+    PATH=~/.local/bin/:$PATH pipenv run python app.py export -s ${s} --vars-dir /home/cloud-user/ansible/vars
+    cd ${SCRIPT_DIR}
+fi
+
+if [ -z "${s}" ] ; then
+    usage
+    exit 2;
+fi
+
+# If result path defined, then check it
+if ! [ -z "$f" ]; then
+   if ! [[ "$f" =~ ^/[-_A-Za-z0-9]+(/[-_A-Za-z0-9]*)*$ ]]; then
+       echo "Error: $f is not a path"
+       usage
+       exit 2;
+   fi
+   f="$p/${0##*/}-$s.res"
+else
+   f=$(mktemp /tmp/${0##*/}-$s.XXXXXX.res)
+fi
+
+# If log path defined, then check it
+if ! [ -z "$p" ]; then
+   if ! [[ "$p" =~ ^/[-_A-Za-z0-9]+(/[-_A-Za-z0-9]*)*$ ]]; then
+       echo "Error: $p is not a path"
+       usage
+       exit 2;
+   fi
+   p="$p/${0##*/}-$s.log"
+else
+   p=$(mktemp /tmp/${0##*/}-$s.XXXXXX.log)
+fi
+
+source ../bin/activate
+echo "Deployment log located in $p"
+
+fonction="${0##*/}"
+# If EC2 instance ID defined, then execute playboook with this instance
+if ! [ -z "$i" ]; then
+  echo "#!/bin/bash" > "$i".sh
+  echo "~/octane/ansible/ansible-inventory.py -i $i" >> "$i".sh
+  chmod 700 "$i".sh
+  ansible-playbook $c main.yml -e stack=$s  --tags="$fonction" -i "$i".sh >> "$p"
+  rm -f "$i".sh
+else
+  ansible-playbook $c main.yml -e stack=$s  --tags="$fonction" >> "$p"
+fi
+
+if [[ "${0##*/}" =~ ^"api"* ]]
+then
+    cat "$p" | jq --arg filename "$p" '{stats: .stats, logfile: $filename}'
+fi
+
+#rm -f "$p"
+#rm -f "$f"
+
+exit 0;
