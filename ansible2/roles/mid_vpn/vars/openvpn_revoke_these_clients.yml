@@ -1,6 +1,0 @@
-openvpn_revoke_these_clients:
-  - name: "fifi"
-    ip: 5
-    email: "fifi@mail.com"
-    sbx_client_network: "10.10.100.88"
-    sbx_client_netmask: "255.255.255.255"

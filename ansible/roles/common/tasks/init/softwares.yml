@@ -29,6 +29,39 @@
   with_items:
     - python36
     - python36-pip
-    - python36-wheel
     - python36-devel
     - python36-virtualenv
+
+- name: Install RPM key
+  rpm_key:
+    key: "{{ item }}"
+    state: present
+  with_items:
+    - https://packages.elastic.co/GPG-KEY-elasticsearch
+    - https://repos.influxdata.com/influxdb.key
+
+- name: Add the Elastic 7.x repository
+  copy:
+    src: elastic-7.repo
+    dest: /etc/yum.repos.d/elastic-7.repo
+    owner: root
+    group: root
+    mode: 0400
+    backup: yes
+    force: yes
+
+- name: Add the InfluxDB repository
+  copy:
+    src: influxdb.repo
+    dest: /etc/yum.repos.d/influxdb.repo
+    owner: root
+    group: root
+    mode: 0400
+    backup: yes
+    force: yes
+
+- name: Install Telemetry
+  package: name={{item}} state=present
+  with_items:
+    - filebeat
+    - telegraf

@@ -1,43 +1,24 @@
 ---
 
-granted:
-  - backend_ip_or_fqdn: my.backend.org
-    backend_port: 1234
+granted_domains:
+  - backend_ip_or_fqdn: 10.1.0.144
+    backend_port: 80
     backend_protocol: http # can be https
-    domain: my.public.domain
-    email: my_name@my.public.domain
+    domain: ciap.lagorce.io
+    email: aubin@lagorce.io
     havp_listening_ip: 127.0.0.1
-    havp_listening_port: uniq HAVP port
+    havp_listening_port: 6666
     havp_protocol: http
     http: false
     http2_listening_ip: 127.0.0.1
-    http2_listening_port: uniq port
+    http2_listening_port: 6667
     http_listening_ip: 0.0.0.0
-    http_listening_port: uniq http port
+    http_listening_port: 80
     https_listening_ip: 0.0.0.0
-    https_listening_port: uniq https port
-    id: uniq ID
+    https_listening_port: 443
+    id: 45
     mod_security: 'on' # can be http
     preserve_host: true # can be false
     proxy_timeout: 5
 
-revoked:
-  - backend_ip_or_fqdn: my.bakckend.org
-    backend_port: 1234
-    backend_protocol: http # can be https
-    domain: my.public.domain
-    email: my_name@my.public.domain
-    havp_listening_ip: 127.0.0.1
-    havp_listening_port: uniq HAVP port
-    havp_protocol: http
-    http: false
-    http2_listening_ip: 127.0.0.1
-    http2_listening_port: uniq port
-    http_listening_ip: 0.0.0.0
-    http_listening_port: uniq http port
-    https_listening_ip: 0.0.0.0
-    https_listening_port: uniq https port
-    id: uniq ID
-    mod_security: 'on' # can be http
-    preserve_host: true # can be false
-    proxy_timeout: 5
+revoked_domains:

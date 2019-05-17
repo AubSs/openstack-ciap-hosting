@@ -29,6 +29,8 @@ class Inventory(object):
             server_obj = self.data['_meta']['hostvars'].setdefault(server['id'], {'openstack': server})
             server_obj['ansible_host'] = self.get_ip_from_server(server, public=public)
             server_obj['ansible_user'] = server['metadata'].get("ssh_user", None)
+            server_obj['metrology_ip'] = server['metadata'].get("metrology_ip", None)
+            server_obj['next_ip'] = server['metadata'].get("next_ip", None)
 
     def get_ip_from_server(self, server, public=False, ip_version=4):
         ip_type = 'floating' if public else 'fixed'

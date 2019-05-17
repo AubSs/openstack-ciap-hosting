@@ -1,12 +1,11 @@
 ---
 
-- name: Setup plug
-  hosts: plug
-  become: yes
-  gather_facts: yes
-  roles:
-    - common
-    - plug
+#- name: Setup plug
+#  hosts: plug
+#  become: yes
+#  gather_facts: yes
+#  roles:
+#    - common
     
 - name: Setup Mid Waf
   hosts: mid-waf
@@ -14,4 +13,18 @@
   gather_facts: yes
   roles:
     - common
-    - mid-waf
+    - mid_waf
+
+#- name: Setup Low Met
+#  hosts: low-met
+#  become: yes
+#  gather_facts: yes
+#  roles:
+#    - common
+
+#- name: Setup Low Fw
+#  hosts: low-fw
+#  become: yes
+#  gather_facts: yes
+#  roles:
+#    - common
