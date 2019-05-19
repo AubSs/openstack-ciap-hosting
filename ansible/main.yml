@@ -7,7 +7,7 @@
   roles:
     - common
     - plug
-    
+
 - name: Setup Mid Waf
   hosts: mid-waf
   become: yes
@@ -15,6 +15,14 @@
   roles:
     - common
     - mid_waf
+
+- name: Setup UP LB
+  hosts: up-lb
+  become: yes
+  gather_facts: yes
+  roles:
+    - common
+    - up_lb
 
 #- name: Setup Low Met
 #  hosts: low-met

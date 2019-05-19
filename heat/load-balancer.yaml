@@ -188,6 +188,8 @@ resources:
 #>=======                           Outputs                           =======<#
 #>===========================================================================<#
 outputs:
-  port_id:
+  lb_address:
+    value: { get_attr: [ lb, vip_address ] }
+  lb_port_id:
     value: { get_attr: [ lb, vip_port_id ] }
 

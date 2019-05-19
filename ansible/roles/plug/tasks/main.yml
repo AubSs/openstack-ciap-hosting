@@ -42,6 +42,15 @@
     - init
     - plug
 
+- name: Copy plug index html file
+  copy:
+    src: plug.html
+    dest: /usr/share/nginx/html/index.html
+    force: true
+  tags:
+    - init
+    - plug
+
 - name: Nginx vhost
   template:
     src: nginx-vhost.j2

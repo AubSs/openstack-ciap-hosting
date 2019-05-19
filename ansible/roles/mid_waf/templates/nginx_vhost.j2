@@ -16,28 +16,28 @@ server {
         modsecurity {{ item.mod_security }};
         modsecurity_rules_file /etc/nginx/mingtree_modsec.conf;
         proxy_set_header Host $host;
-    {% if item.proxy_timeout is defined %}
+        {% if item.proxy_timeout is defined %}
         proxy_read_timeout {{item.proxy_timeout}}s;
-    {% endif %}
-    {% if item.havp_protocol is defined %}
+        {% endif %}
+        {% if item.havp_protocol is defined %}
         proxy_pass {{ item.havp_protocol }}://{{ item.havp_listening_ip }}:{{ item.havp_listening_port }}/mingtree/;
-    {% else %}
+        {% else %}
         proxy_pass {{ item.backend_protocol }}://{{ next_ip }}:{{ item.http_listening_port }}/mingtree/;
-    {% endif %}
+        {% endif %}
     }
 
     location / {
         modsecurity {{ item.mod_security }};
         modsecurity_rules_file /etc/nginx/modsec.conf;
         proxy_set_header Host $host;
-    {% if item.proxy_timeout is defined %}
+        {% if item.proxy_timeout is defined %}
         proxy_read_timeout {{item.proxy_timeout}}s;
-    {% endif %}
-    {% if item.havp_protocol is defined %}
+        {% endif %}
+        {% if item.havp_protocol is defined %}
         proxy_pass {{ item.havp_protocol }}://{{ item.havp_listening_ip }}:{{ item.havp_listening_port }}/;
-    {% else %}
+        {% else %}
         proxy_pass {{ item.backend_protocol }}://{{ next_ip }}:{{ item.http_listening_port }}/;
-    {% endif %}
+        {% endif %}
     }
 
     error_page 404 /404.html;
@@ -68,36 +68,36 @@ server {
         modsecurity {{ item.mod_security }};
         modsecurity_rules_file /etc/nginx/mingtree_modsec.conf;
         proxy_set_header Host $host;
-    {% if item.proxy_timeout is defined %}
+        {% if item.proxy_timeout is defined %}
         proxy_read_timeout {{item.proxy_timeout}}s;
-    {% endif %}
-    {% if item.havp_protocol is defined %}
+        {% endif %}
+        {% if item.havp_protocol is defined %}
         proxy_pass {{ item.havp_protocol }}://{{ item.havp_listening_ip }}:{{ item.havp_listening_port }}/mingtree/;
-    {% else %}
+        {% else %}
         {% if item.backend_protocol  == "https" %}
         proxy_pass {{ item.backend_protocol }}://{{ next_ip }}:{{ item.https_listening_port }}/mingtree/;
         {% else %}
         proxy_pass {{ item.backend_protocol }}://{{ next_ip }}:{{ item.http_listening_port }}/mingtree/;
         {% endif %}
-    {% endif %}
+        {% endif %}
     }
 
     location / {
         modsecurity {{ item.mod_security }};
         modsecurity_rules_file /etc/nginx/modsec.conf;
         proxy_set_header Host $host;
-    {% if item.proxy_timeout is defined %}
+        {% if item.proxy_timeout is defined %}
         proxy_read_timeout {{item.proxy_timeout}}s;
-    {% endif %}
-    {% if item.havp_protocol is defined %}
+        {% endif %}
+        {% if item.havp_protocol is defined %}
         proxy_pass {{ item.havp_protocol }}://{{ item.havp_listening_ip }}:{{ item.havp_listening_port }}/;
-    {% else %}
-    {% if item.backend_protocol  == "https" %}
+        {% else %}
+        {% if item.backend_protocol  == "https" %}
         proxy_pass {{ item.backend_protocol }}://{{ next_ip }}:{{ item.https_listening_port }}/;
-    {% else %}
+        {% else %}
         proxy_pass {{ item.backend_protocol }}://{{ next_ip }}:{{ item.http_listening_port }}/;
-    {% endif %}
-    {% endif %}
+        {% endif %}
+        {% endif %}
     }
 
     ssl_certificate "{{v_certificates_path}}/{{ item.domain }}.crt";
@@ -132,11 +132,11 @@ server {
     location / {
         modsecurity off;
         proxy_set_header Host $host;
-    {% if item.backend_protocol  == "https" %}
+        {% if item.backend_protocol  == "https" %}
         proxy_pass {{ item.backend_protocol }}://{{ next_ip }}:{{ item.https_listening_port }}/;
-    {% else %}
+        {% else %}
         proxy_pass {{ item.backend_protocol }}://{{ next_ip }}:{{ item.http_listening_port }}/;
-    {% endif %}
+        {% endif %}
     }
 
     location /mingtree/ {
