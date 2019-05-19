@@ -1,7 +1,7 @@
 ---
 
 #Ansible best-practice : use template for complex iptables rules
-- name:  Define iptables rules for granted domains and granted VPN streams
+- name: Define iptables rules for granted domains and granted VPN streams
   template:
     src: "iptables.j2"
     dest: "/etc/sysconfig/iptables"

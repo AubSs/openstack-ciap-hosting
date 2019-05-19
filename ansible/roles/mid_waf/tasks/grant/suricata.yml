@@ -1,34 +1,34 @@
 ---
 
-- name:  Create configuration SURICATA directories for each domain
+- name: Create configuration SURICATA directories for each domain
   file:
-      path: "{{ v_suricata_root_directory }}/{{ item.domain }}"
-      state: directory
-      mode: 0755
+    path: "{{ v_suricata_root_directory }}/{{ item.domain }}"
+    state: directory
+    mode: 0755
   with_items: "{{ granted_domains }}"
 
-- name:  Create bin SURICATA directories for each domain
+- name: Create bin SURICATA directories for each domain
   file:
-      path: "{{ v_suricata_root_directory }}/{{ item.domain }}/bin"
-      state: directory
-      mode: 0755
+    path: "{{ v_suricata_root_directory }}/{{ item.domain }}/bin"
+    state: directory
+    mode: 0755
   with_items: "{{ granted_domains }}"
 
-- name:  Create etc SURICATA directories for each domain
+- name: Create etc SURICATA directories for each domain
   file:
-      path: "{{ v_suricata_root_directory }}/{{ item.domain }}/etc"
-      state: directory
-      mode: 0755
+    path: "{{ v_suricata_root_directory }}/{{ item.domain }}/etc"
+    state: directory
+    mode: 0755
   with_items: "{{ granted_domains }}"
 
-- name:  Create log SURICATA directories for each domain
+- name: Create log SURICATA directories for each domain
   file:
-      path: "{{ v_log_path }}/suricata/{{ item.domain }}"
-      state: directory
-      mode: 0755
+    path: "{{ v_log_path }}/suricata/{{ item.domain }}"
+    state: directory
+    mode: 0755
   with_items: "{{ granted_domains }}"
 
-- name:  Symlink SURICATA binary for each domain
+- name: Symlink SURICATA binary for each domain
   file:
     src: "{{ v_suricata_root_directory }}/suricata/bin/suricata"
     dest: "{{ v_suricata_root_directory }}/{{ item.domain }}/bin/suricata.{{ item.domain }}"
@@ -37,7 +37,7 @@
     state: link
   with_items: "{{ granted_domains }}"
 
-- name:  Symlink SURICATA include directories for each domain
+- name: Symlink SURICATA include directories for each domain
   file:
     src: "{{ v_suricata_root_directory }}/suricata/include"
     dest: "{{ v_suricata_root_directory }}/{{ item.domain }}/include"
@@ -46,7 +46,7 @@
     state: link
   with_items: "{{ granted_domains }}"
 
-- name:  Symlink SURICATA lib directories for each domain
+- name: Symlink SURICATA lib directories for each domain
   file:
     src: "{{ v_suricata_root_directory }}/suricata/lib"
     dest: "{{ v_suricata_root_directory }}/{{ item.domain }}/lib"
@@ -55,7 +55,7 @@
     state: link
   with_items: "{{ granted_domains }}"
 
-- name:  Symlink SURICATA share directories for each domain
+- name: Symlink SURICATA share directories for each domain
   file:
     src: "{{ v_suricata_root_directory }}/suricata/share"
     dest: "{{ v_suricata_root_directory }}/{{ item.domain }}/share"
@@ -64,7 +64,7 @@
     state: link
   with_items: "{{ granted_domains }}"
 
-- name:  Install SURICATA default configuration from archive for each domain
+- name: Install SURICATA default configuration from archive for each domain
   unarchive:
     src: "suricata.config.tar.gz"
     dest: "{{ v_suricata_root_directory }}/{{ item.domain }}/etc/"
@@ -83,7 +83,7 @@
   notify: Restart SURICATA daemon
   register: granted_suricata_domains_changed
 
-- name:  Install SURICATA daemon configuration file for each domain
+- name: Install SURICATA daemon configuration file for each domain
   template:
     src: "suricata.service.j2"
     dest: "/etc/systemd/system/suricata.{{ item.domain }}.service"
@@ -95,7 +95,7 @@
   notify: Restart SURICATA daemon
   register: granted_suricata_domains_changed
 
-- name: remember which SURICATA daemons need to restart
+- name: Remember which SURICATA daemons need to restart
   set_fact:
     restart_suricata_daemons: "{{ restart_suricata_daemons | default([]) + [item.item.domain] }}"
   when: item.changed

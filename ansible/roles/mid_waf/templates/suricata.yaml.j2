@@ -59,6 +59,7 @@ rule-files:
  - tor.rules
  - http-events.rules    # available in suricata sources under rules dir
  - tls-events.rules     # available in suricata sources under rules dir
+ - coe.rules            # COE check
 
 classification-file: "{{ v_suricata_root_directory }}/{{ item.domain }}/etc/classification.config"
 reference-config-file: "{{ v_suricata_root_directory }}/{{ item.domain }}/etc/reference.config"

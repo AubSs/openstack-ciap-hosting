@@ -35,8 +35,8 @@
     dest: "/usr/lib64"
     copy: yes
   with_items:
-      - libyajl.tar.gz
-      - nginx.tar.gz
+    - libyajl.tar.gz
+    - nginx.tar.gz
 
 - name: Symlink modsecurity librairies
   file:

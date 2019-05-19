@@ -1,40 +1,16 @@
 ---
 
-- name: Install nginx softwares
-  package:
-   name: "{{ item }}"
-   state: present
-  with_items:
-    - nginx
-    - nginx-all-modules
-    - nginx-mod-stream
-    - mod_security
-    - mod_security_crs
-
-- name: Install antivirus softwares
-  package:
-   name: "{{ item }}"
-   state: present
-  with_items:
-    - clamav
-    - clamav-data
-    - clamav-filesystem
-    - clamav-scanner
-    - clamav-server
-    - clamav-server-systemd
-    - clamav-update
-
 - name: Create HAVP directory
   file:
-    path: "{{ v_havp_root_directory }}"
-    state: directory
-    mode: 0755
+      path: "{{ v_havp_root_directory }}"
+      state: directory
+      mode: 0755
 
 - name: Create SURICATA directory
   file:
-    path: "{{ v_suricata_root_directory }}"
-    state: directory
-    mode: 0755
+      path: "{{ v_suricata_root_directory }}"
+      state: directory
+      mode: 0755
 
 - name: Install HAVP from archive
   unarchive:

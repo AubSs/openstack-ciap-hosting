@@ -1,17 +1,17 @@
 ---
 
 granted_domains:
-  - backend_ip_or_fqdn: 10.1.0.144
+  - backend_ip_or_fqdn: 10.1.0.151
     backend_port: 80
     backend_protocol: http # can be https
     domain: ciap.lagorce.io
     email: aubin@lagorce.io
     havp_listening_ip: 127.0.0.1
-    havp_listening_port: 6666
+    havp_listening_port: 20001
     havp_protocol: http
-    http: false
+    http: true
     http2_listening_ip: 127.0.0.1
-    http2_listening_port: 6667
+    http2_listening_port: 20002
     http_listening_ip: 0.0.0.0
     http_listening_port: 80
     https_listening_ip: 0.0.0.0
@@ -22,3 +22,22 @@ granted_domains:
     proxy_timeout: 5
 
 revoked_domains:
+  - backend_ip_or_fqdn: 10.1.0.151
+    backend_port: 80
+    backend_protocol: http # can be https
+    domain: ciap.lagorce.io
+    email: aubin@lagorce.io
+    havp_listening_ip: 127.0.0.1
+    havp_listening_port: 20001
+    havp_protocol: http
+    http: true
+    http2_listening_ip: 127.0.0.1
+    http2_listening_port: 20002
+    http_listening_ip: 0.0.0.0
+    http_listening_port: 80
+    https_listening_ip: 0.0.0.0
+    https_listening_port: 443
+    id: 45
+    mod_security: 'on' # can be http
+    preserve_host: true # can be false
+    proxy_timeout: 5

@@ -6,12 +6,13 @@
     state: on
     persistent: yes
   with_items:
-     - clamd_use_jit
-     - httpd_execmem
-     - httpd_can_network_connect
-     - httpd_can_network_relay
-     - nis_enabled
-     - antivirus_can_scan_system
+    - clamd_use_jit
+    - httpd_execmem
+    - httpd_can_network_connect
+    - httpd_can_network_relay
+    - nis_enabled
+    - antivirus_use_jit
+    - antivirus_can_scan_system
 
 - name: Install tools
   package:

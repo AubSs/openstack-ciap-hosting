@@ -5,7 +5,7 @@ USER clamscan
 GROUP clamscan
 DAEMON false
 PIDFILE /var/run/havp_{{ item.domain }}.pid
-SERVERNUMBER 10
+SERVERNUMBER 2
 MAXSERVERS 20
 ACCESSLOG {{ v_log_path }}/havp/{{ item.domain }}/{{ item.domain }}_access.log
 ERRORLOG {{ v_log_path }}/havp/{{ item.domain }}/{{ item.domain }}_error.log
@@ -27,10 +27,9 @@ FAILSCANERROR false
 SCANNERTIMEOUT 1
 RANGE true
 PRELOADZIPHEADER true
-ENABLECLAMLIB false
-ENABLECLAMD true
-CLAMDSERVER {{ v_clamd_listening_address }}
-CLAMDPORT {{ v_clamd_listening_port }}
+ENABLECLAMLIB true
+CLAMDBDIR /var/lib/clamav
+ENABLECLAMD false
 ENABLEFPROT false
 ENABLEAVG false
 ENABLEAVESERVER false

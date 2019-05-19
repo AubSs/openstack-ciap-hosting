@@ -11,6 +11,11 @@
     - grantdomain
     - mid_waf
 
+- import_tasks: init/swap.yml
+  tags:
+    - init
+    - mid_waf
+
 - import_tasks: init/softwares.yml
   tags:
     - init
@@ -36,6 +41,20 @@
     - init
     - mid_waf
 
+#- import_tasks: grant/filebeat.yml
+#  tags:
+#    - init
+#    - grantdomain
+#    - revokedomain
+#    - mid_waf
+
+#- import_tasks: grant/telegraf.yml
+#  tags:
+#    - init
+#    - grantdomain
+#    - revokedomain
+#    - mid_waf
+
 - import_tasks: grant/iptables.yml
   tags:
     - init
@@ -59,6 +78,11 @@
     - mid_waf
 
 - import_tasks: grant/suricata.yml
+  tags:
+    - grantdomain
+    - mid_waf
+
+- import_tasks: grant/suricata-coe.yml
   tags:
     - grantdomain
     - mid_waf

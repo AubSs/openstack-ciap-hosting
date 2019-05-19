@@ -1,11 +1,12 @@
 ---
 
-#- name: Setup plug
-#  hosts: plug
-#  become: yes
-#  gather_facts: yes
-#  roles:
-#    - common
+- name: Setup plug
+  hosts: plug
+  become: yes
+  gather_facts: yes
+  roles:
+    - common
+    - plug
     
 - name: Setup Mid Waf
   hosts: mid-waf
