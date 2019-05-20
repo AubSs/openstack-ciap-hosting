@@ -31,9 +31,10 @@
 #  roles:
 #    - common
 
-#- name: Setup Low Fw
-#  hosts: low-fw
-#  become: yes
-#  gather_facts: yes
-#  roles:
-#    - common
+- name: Setup Low Fw
+  hosts: low-fw
+  become: yes
+  gather_facts: yes
+  roles:
+    - common
+    - low_fw

@@ -18,4 +18,4 @@ echo "Start ansible"
 cd $script_dir
 TIME=$(date +%Y-%m-%d.%H-%M-%S)
 LOG_PATH=/var/log/ciap
-ansible-playbook main.yml | tee $LOG_PATH/ciap.ansible.$TIME.log
+ansible-playbook main.yml --tags init | tee $LOG_PATH/ciap.ansible.$TIME.log

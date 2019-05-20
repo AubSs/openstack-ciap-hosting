@@ -154,7 +154,7 @@ resources:
     type: OS::Octavia::HealthMonitor
     properties:
       pool: { get_resource: pool_http }
-      type: HTTP
+      type: TCP
       delay: 5
       max_retries: 5
       timeout: 5
@@ -179,7 +179,7 @@ resources:
     type: OS::Octavia::HealthMonitor
     properties:
       pool: { get_resource: pool_https }
-      type: HTTPS
+      type: TCP
       delay: 5
       max_retries: 5
       timeout: 5
