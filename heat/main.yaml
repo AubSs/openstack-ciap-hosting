@@ -111,13 +111,14 @@ resources:
       network: { get_resource: public_network }
       subnet: { get_resource: public_subnet }
       metadata: {
-        'next_ip': { get_attr: [ mid_waf_servers, lb_address ] },
+        'mid_waf_lb_ip': { get_attr: [ mid_waf_servers, lb_address ] },
+        'mid_vpn_lb_ip': { get_attr: [ mid_vpn_servers, lb_address ] },
         'ciap': { get_param: 'OS::stack_name' },
         'instance': 'up-lb',
         'metrology_ip': { get_attr: [ low_met_server, ip ]}
       }
 
-  lb_floating:
+  main_lb_floating:
     type: OS::Neutron::FloatingIP
     properties:
       floating_network: { get_param: public_net }
@@ -163,9 +164,28 @@ resources:
       network: { get_resource: filtered_network }
       subnet: { get_resource: filtered_subnet }
       metadata: {
-        'next_ip': { get_attr: [ plug_server, ip ]},
+        'low_fw_lb_ip': { get_attr: [ low_fw_servers, lb_address ] },
         'ciap': { get_param: 'OS::stack_name' },
         'instance': 'mid-waf',
+        'metrology_ip': { get_attr: [ low_met_server, ip ]}
+      }
+
+  mid_vpn_servers:
+    type: load-balancer.yaml
+    properties:
+      name:
+        list_join:
+          - '-'
+          - ['ciap', { get_param: 'OS::stack_name' }, 'mid-vpn']
+      image: { get_param: server_image }
+      flavor: { get_param: server_flavor }
+      ssh_user: { get_param: ssh_username }
+      ssh_authorized_key: { get_attr: [ ssh_key, public_key ] }
+      network: { get_resource: filtered_network }
+      subnet: { get_resource: filtered_subnet }
+      metadata: {
+        'ciap': { get_param: 'OS::stack_name' },
+        'instance': 'mid-vpn',
         'metrology_ip': { get_attr: [ low_met_server, ip ]}
       }
 
@@ -223,7 +243,6 @@ resources:
       network: { get_resource: private_network }
       subnet: { get_resource: private_subnet }
       metadata: {
-        'next_ip': { get_attr: [ plug_server, ip ]},
         'ciap': { get_param: 'OS::stack_name' },
         'instance': 'low-fw',
         'metrology_ip': { get_attr: [ low_met_server, ip ]}
@@ -272,5 +291,5 @@ outputs:
 
   public_ip:
     description: Floating IP address of ciap
-    value: { get_attr: [ lb_floating, floating_ip_address] }
+    value: { get_attr: [ main_lb_floating, floating_ip_address] }
 

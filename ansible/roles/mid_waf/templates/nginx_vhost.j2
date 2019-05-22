@@ -22,7 +22,7 @@ server {
         {% if item.havp_protocol is defined %}
         proxy_pass {{ item.havp_protocol }}://{{ item.havp_listening_ip }}:{{ item.havp_listening_port }}/mingtree/;
         {% else %}
-        proxy_pass {{ item.backend_protocol }}://{{ next_ip }}:{{ item.http_listening_port }}/mingtree/;
+        proxy_pass https://{{ low_fw_lb_ip }}/mingtree/;
         {% endif %}
     }
 
@@ -36,7 +36,7 @@ server {
         {% if item.havp_protocol is defined %}
         proxy_pass {{ item.havp_protocol }}://{{ item.havp_listening_ip }}:{{ item.havp_listening_port }}/;
         {% else %}
-        proxy_pass {{ item.backend_protocol }}://{{ next_ip }}:{{ item.http_listening_port }}/;
+        proxy_pass https://{{ low_fw_lb_ip }};
         {% endif %}
     }
 
@@ -74,11 +74,7 @@ server {
         {% if item.havp_protocol is defined %}
         proxy_pass {{ item.havp_protocol }}://{{ item.havp_listening_ip }}:{{ item.havp_listening_port }}/mingtree/;
         {% else %}
-        {% if item.backend_protocol  == "https" %}
-        proxy_pass {{ item.backend_protocol }}://{{ next_ip }}:{{ item.https_listening_port }}/mingtree/;
-        {% else %}
-        proxy_pass {{ item.backend_protocol }}://{{ next_ip }}:{{ item.http_listening_port }}/mingtree/;
-        {% endif %}
+        proxy_pass https://{{ low_fw_lb_ip }}/mingtree/;
         {% endif %}
     }
 
@@ -92,11 +88,7 @@ server {
         {% if item.havp_protocol is defined %}
         proxy_pass {{ item.havp_protocol }}://{{ item.havp_listening_ip }}:{{ item.havp_listening_port }}/;
         {% else %}
-        {% if item.backend_protocol  == "https" %}
-        proxy_pass {{ item.backend_protocol }}://{{ next_ip }}:{{ item.https_listening_port }}/;
-        {% else %}
-        proxy_pass {{ item.backend_protocol }}://{{ next_ip }}:{{ item.http_listening_port }}/;
-        {% endif %}
+        proxy_pass https://{{ low_fw_lb_ip }};
         {% endif %}
     }
 
@@ -132,17 +124,13 @@ server {
     location / {
         modsecurity off;
         proxy_set_header Host $host;
-        {% if item.backend_protocol  == "https" %}
-        proxy_pass {{ item.backend_protocol }}://{{ next_ip }}:{{ item.https_listening_port }}/;
-        {% else %}
-        proxy_pass {{ item.backend_protocol }}://{{ next_ip }}:{{ item.http_listening_port }}/;
-        {% endif %}
+        proxy_pass https://{{ low_fw_lb_ip }};
     }
 
     location /mingtree/ {
         modsecurity off;
         proxy_set_header Host $host;
-        proxy_pass https://{{ next_ip }}:{{ v_metrology_grafana_port }}/;
+        proxy_pass https://{{ metrology_ip }}:{{ v_metrology_grafana_port }}/;
     }
 
     error_page 404 /404.html;

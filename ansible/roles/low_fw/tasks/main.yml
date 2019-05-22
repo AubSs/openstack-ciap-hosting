@@ -65,3 +65,8 @@
   tags:
     - revokedomain
     - low_fw
+
+- import_tasks: revoke/nginx.yml
+  tags:
+    - revokedomain
+    - low_fw

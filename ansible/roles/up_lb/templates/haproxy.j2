@@ -64,7 +64,7 @@ backend {{ item.domain }}
   stick store-response payload_lv(43,1) if serverhello
 
   option ssl-hello-chk
-  server {{ item.domain }} {{ next_ip }}:443 check
+  server {{ item.domain }} {{ mid_waf_lb_ip }}:443 check
 
 {% endfor %}
 
