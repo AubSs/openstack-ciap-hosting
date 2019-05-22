@@ -1,0 +1,22 @@
+---
+
+- name: Enable influxdb systemd service
+  systemd:
+    name: "influxdb"
+    daemon_reload: yes
+    enabled: yes
+    state: restarted
+
+- name: Enable Logstash systemd service
+  systemd:
+    name: logstash
+    daemon_reload: yes
+    enabled: yes
+    state: restarted
+
+- name: Enable and restart grafana systemd service
+  systemd:
+    name: "grafana-server"
+    daemon_reload: yes
+    enabled: yes
+    state: restarted

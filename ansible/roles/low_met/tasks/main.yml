@@ -1,24 +1,14 @@
 ---
 
-- name: Add granted domains
+- name: Add domains
   include_vars: "{{ item }}"
   with_first_found:
     - files:
-        - "granted_domains_{{stack}}.yml"
+        - "domains.yml"
       skip: true
   tags:
     - init
     - grantdomain
-    - low_met
-
-- name: Add revoked domains
-  include_vars: "{{ item }}"
-  with_first_found:
-    - files:
-        - "revoked_domains_{{stack}}.yml"
-      skip: true
-  tags:
-    - revokedomain
     - low_met
 
 - import_tasks: init/ssl.yml

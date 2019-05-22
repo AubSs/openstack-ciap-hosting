@@ -1,6 +1,6 @@
 ---
 
-- name:  Install main logstash configuration file
+- name: Install main logstash configuration file
   template:
     src: "logstash/logstash_conf.j2"
     dest: "/etc/logstash/logstash.yml"
@@ -10,7 +10,7 @@
     mode: 0644
   notify: Enable Logstash systemd service
 
-- name:  Install logstash service
+- name: Install logstash service
   copy:
     src: "logstash/logstash_service"
     dest: "/etc/systemd/system/logstash.service"

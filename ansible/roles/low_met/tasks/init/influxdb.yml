@@ -1,6 +1,6 @@
 ---
 
-- name:  Install influxdb config file
+- name: Install influxdb config file
   template:
     src: "influxdb/influxdb_conf.j2"
     dest: "/etc/influxdb/influxdb.conf"

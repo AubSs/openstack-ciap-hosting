@@ -10,7 +10,7 @@
   with_items: 
     - "{{ granted_domains }}"
 
-- name:  Install logstash patterns for each log
+- name: Install logstash patterns for each log
   template:
     src: "logstash/logstash_output_{{ item[1] }}_conf.j2"
     dest: "/etc/logstash/conf.d/{{ item[0].domain }}/output_{{ item[1] }}.conf"

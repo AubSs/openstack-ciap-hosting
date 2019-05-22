@@ -1,6 +1,6 @@
 ---
 
-- name:  Install grafana config file
+- name: Install grafana config file
   template:
     src: "grafana/grafana_ini.j2"
     dest: "/etc/grafana/grafana.ini"

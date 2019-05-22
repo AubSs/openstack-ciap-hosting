@@ -2,10 +2,10 @@
 
 - name: Create plugin directory
   file:
-      path: "/var/lib/grafana/plugins"
-      state: directory
-      group: grafana
-      mode: 0755
+    path: "/var/lib/grafana/plugins"
+    state: directory
+    group: grafana
+    mode: 0755
 
 - name: Deploy grafana plugins
   unarchive:
