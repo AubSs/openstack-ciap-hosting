@@ -1,11 +1,7 @@
 ---
 
 - name: Add domains
-  include_vars: "{{ item }}"
-  with_first_found:
-    - files:
-        - "domains.yml"
-      skip: true
+  include_vars: "domains.yml"
   tags: [always]
 
 - import_tasks: init/softwares.yml

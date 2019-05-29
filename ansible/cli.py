@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
-import argparse
 import subprocess
+import argparse
+import json
 import sys
 import os
 
@@ -34,10 +35,11 @@ class CLI(object):
         group_info.add_argument('--list-hosts', help='List all available hosts', action='store_true')
         group_info.add_argument('--list-tags',  help='List all available tags',  action='store_true')
 
+        playbook_default = os.path.dirname(os.path.realpath(__file__)) + '/main.yml'
         group_execute = parser.add_argument_group('Execute')
         group_execute.add_argument('--tags', nargs='+', type=str, help='Only run tasks tagged with these values')
         group_execute.add_argument('--hosts', nargs='+', type=str, help='Only run hosts roles')
-        group_execute.add_argument('--playbook', default='main.yml', help='Specify ansible playbook (Default: main.yml)')
+        group_execute.add_argument('--playbook', default=playbook_default, help='Specify ansible playbook (Default: main.yml)')
 
         return parser.parse_args()
 
@@ -71,7 +73,7 @@ class CLI(object):
 
 if __name__ == "__main__":
     cli = CLI()
-
+    
     args = cli.argparse()
     
     if len(sys.argv) == 1:

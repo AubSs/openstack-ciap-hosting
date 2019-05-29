@@ -1,66 +1,22 @@
 ---
 
-- name: Install nginx
-  package:
-    name: nginx
-    state: present
+- name: Get plug configuration
+  include_vars: "plug.yml"
   tags:
     - init
     - plug
 
-- name: Install openssl
-  package:
-    name: openssl
-    state: present
+- import_tasks: mariadb.yml
   tags:
     - init
     - plug
 
-- name: Generate Strong Dh (Diffie-Hellman)
-  shell: openssl dhparam -out /etc/ssl/certs/dhparam.pem 2048
+- import_tasks: wordpress.yml
   tags:
     - init
     - plug
 
-- name: Create Self-Signed Certificate
-  shell: openssl req -x509 -newkey rsa:4096 -keyout /etc/ssl/certs/ss-key.pem -out /etc/ssl/certs/ss-cert.pem -nodes -days 365 -subj '/CN=localhost'
-  tags:
-    - init
-    - plug
-
-- name: Nginx configuration
-  template:
-    src: nginx-conf.j2
-    dest: /etc/nginx/nginx.conf
-    owner: root
-    group: root
-    mode: 0644
-    backup: yes
-  run_once: true
-  notify: Reload nginx daemon
-  tags:
-    - init
-    - plug
-
-- name: Copy plug index html file
-  copy:
-    src: plug.html
-    dest: /usr/share/nginx/html/index.html
-    force: true
-  tags:
-    - init
-    - plug
-
-- name: Nginx vhost
-  template:
-    src: nginx-vhost.j2
-    dest: /etc/nginx/conf.d/plug.conf
-    owner: root
-    group: root
-    mode: 0644
-    backup: yes
-  run_once: true
-  notify: Reload nginx daemon
+- import_tasks: webserver.yml
   tags:
     - init
     - plug
