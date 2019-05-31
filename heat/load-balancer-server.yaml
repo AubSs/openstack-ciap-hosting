@@ -37,13 +37,13 @@ parameters:
     type: string
     description: Subnet used by the server
 
-  pool_http:
+  security_group:
     type: string
-    description: HTTP Pool to contact
+    description: Security Group
 
-  pool_https:
+  pool:
     type: string
-    description: HTTPS Pool to contact
+    description: Pool to contact
 
 #>===========================================================================<#
 #>=======                          Resources                          =======<#
@@ -57,6 +57,7 @@ resources:
       flavor: { get_param: flavor }
       metadata: { get_param: metadata }
       networks: [{ network: { get_param: network } }]
+      security_groups: [{ get_param: security_group }]
       user_data_format: RAW
       user_data:
         str_replace:
@@ -74,19 +75,10 @@ resources:
             $NAME: { get_param: ssh_user }
             $PUBLIC_KEY: { get_param: ssh_authorized_key }
 
-  member_http:
+  member:
     type: OS::Octavia::PoolMember
     properties:
-      pool: { get_param: pool_http }
-      address: { get_attr: [server, first_address] }
-      protocol_port: 80
-      subnet: { get_param: subnet }
-      monitor_port: 65000
-
-  member_https:
-    type: OS::Octavia::PoolMember
-    properties:
-      pool: { get_param: pool_https }
+      pool: { get_param: pool }
       address: { get_attr: [server, first_address] }
       protocol_port: 443
       subnet: { get_param: subnet }

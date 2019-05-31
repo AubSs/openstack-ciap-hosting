@@ -34,6 +34,10 @@ parameters:
     type: string
     description: Subnet used by the servers
 
+  admin_ip:
+    type: string
+    description: Admin private IP
+
   metadata:
     default: {}
     type: json
@@ -62,12 +66,73 @@ resources:
           ssh_authorized_key: { get_param: ssh_authorized_key }
           network: { get_param: network }
           subnet: { get_param: subnet }
-          pool_http: { get_resource: pool_http }
-          pool_https: { get_resource: pool_https }
+          security_group: { get_resource: security_group }
+          pool: { get_resource: pool }
           metadata: { map_merge: [{
             'metering.server_group': { get_resource: server_group_id },
             'ssh_user': { get_param: ssh_user }
           }, { get_param: metadata } ]}
+
+  security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      rules:
+        ##### Ingress #####
+        - remote_ip_prefix:
+            str_replace:
+              template: ip/32
+              params:
+                ip: { get_attr: [ lb, vip_address ] }
+          direction: ingress
+          protocol: tcp
+          port_range_min: 443
+          port_range_max: 443
+        - remote_ip_prefix:
+            str_replace:
+              template: ip/32
+              params:
+                ip: { get_attr: [ lb, vip_address ] }
+          direction: ingress
+          protocol: tcp
+          port_range_min: 65000
+          port_range_max: 65000
+        - remote_ip_prefix:
+            str_replace:
+              template: ip/32
+              params:
+                ip: { get_param: admin_ip }
+          direction: ingress
+          protocol: tcp
+          port_range_min: 22
+          port_range_max: 22
+        - remote_ip_prefix:
+            str_replace:
+              template: ip/32
+              params:
+                ip: { get_param: admin_ip }
+          direction: ingress
+          protocol: icmp
+        ##### Egress #####
+        - remote_ip_prefix: 0.0.0.0/0
+          direction: egress
+          protocol: tcp
+          port_range_min: 80
+          port_range_max: 80
+        - remote_ip_prefix: 0.0.0.0/0
+          direction: egress
+          protocol: tcp
+          port_range_min: 443
+          port_range_max: 443
+        - remote_ip_prefix: 0.0.0.0/0
+          direction: egress
+          protocol: tcp
+          port_range_min: 53
+          port_range_max: 53
+        - remote_ip_prefix: 0.0.0.0/0
+          direction: egress
+          protocol: udp
+          port_range_min: 53
+          port_range_max: 53
 
   scaleup_policy:
     type: OS::Heat::ScalingPolicy
@@ -134,51 +199,26 @@ resources:
     properties:
       vip_subnet: { get_param: subnet }
 
-  listener_http:
-    type: OS::Octavia::Listener
-    properties:
-      loadbalancer: { get_resource: lb }
-      protocol: HTTP
-      protocol_port: 80
-
-  pool_http:
-    type: OS::Octavia::Pool
-    properties:
-      listener: { get_resource: listener_http }
-      lb_algorithm: ROUND_ROBIN
-      protocol: HTTP
-      session_persistence:
-        type: SOURCE_IP
-
-  lb_monitor_http:
-    type: OS::Octavia::HealthMonitor
-    properties:
-      pool: { get_resource: pool_http }
-      type: TCP
-      delay: 5
-      max_retries: 5
-      timeout: 5
-
-  listener_https:
+  listener:
     type: OS::Octavia::Listener
     properties:
       loadbalancer: { get_resource: lb }
       protocol: HTTPS
       protocol_port: 443
 
-  pool_https:
+  pool:
     type: OS::Octavia::Pool
     properties:
-      listener: { get_resource: listener_https }
+      listener: { get_resource: listener }
       lb_algorithm: ROUND_ROBIN
       protocol: HTTPS
       session_persistence:
         type: SOURCE_IP
 
-  lb_monitor_https:
+  lb_monitor:
     type: OS::Octavia::HealthMonitor
     properties:
-      pool: { get_resource: pool_https }
+      pool: { get_resource: pool }
       type: TCP
       delay: 5
       max_retries: 5

@@ -204,6 +204,9 @@ resources:
 #>=======                           Outputs                           =======<#
 #>===========================================================================<#
 outputs:
-  ip:
+  public_ip:
     description: Floating IP address of admin server
     value: { get_attr: [ floating_ip, floating_ip_address ] }
+  private_ip:
+    description: Private IP address of admin server
+    value: { get_attr: [ server, first_address ]}

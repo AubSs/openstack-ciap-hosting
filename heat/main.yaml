@@ -110,6 +110,7 @@ resources:
       ssh_authorized_key: { get_attr: [ ssh_key, public_key ] }
       network: { get_resource: public_network }
       subnet: { get_resource: public_subnet }
+      admin_ip: { get_attr: [ admin_server, private_ip ]}
       metadata: {
         'mid_waf_lb_ip': { get_attr: [ mid_waf_servers, lb_address ] },
         'mid_vpn_lb_ip': { get_attr: [ mid_vpn_servers, lb_address ] },
@@ -163,6 +164,7 @@ resources:
       ssh_authorized_key: { get_attr: [ ssh_key, public_key ] }
       network: { get_resource: filtered_network }
       subnet: { get_resource: filtered_subnet }
+      admin_ip: { get_attr: [ admin_server, private_ip ]}
       metadata: {
         'low_fw_lb_ip': { get_attr: [ low_fw_servers, lb_address ] },
         'ciap': { get_param: 'OS::stack_name' },
@@ -183,6 +185,7 @@ resources:
       ssh_authorized_key: { get_attr: [ ssh_key, public_key ] }
       network: { get_resource: filtered_network }
       subnet: { get_resource: filtered_subnet }
+      admin_ip: { get_attr: [ admin_server, private_ip ]}
       metadata: {
         'ciap': { get_param: 'OS::stack_name' },
         'instance': 'mid-vpn',
@@ -242,6 +245,7 @@ resources:
       ssh_authorized_key: { get_attr: [ ssh_key, public_key ] }
       network: { get_resource: private_network }
       subnet: { get_resource: private_subnet }
+      admin_ip: { get_attr: [ admin_server, private_ip ]}
       metadata: {
         'ciap': { get_param: 'OS::stack_name' },
         'instance': 'low-fw',
@@ -287,7 +291,7 @@ resources:
 outputs:
   admin_ip:
     description: Floating IP address of admin server
-    value: { get_attr: [ admin_server, ip ]}
+    value: { get_attr: [ admin_server, public_ip ]}
 
   public_ip:
     description: Floating IP address of ciap
