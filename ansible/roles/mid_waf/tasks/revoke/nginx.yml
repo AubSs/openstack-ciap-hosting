@@ -5,6 +5,7 @@
     path: "/etc/nginx/conf.d/{{ item.domain }}.conf"
     state: absent
   when:
+    - item.domain is defined
     - revoked_domains is defined
     - ( revoked_domains )
   with_items: 

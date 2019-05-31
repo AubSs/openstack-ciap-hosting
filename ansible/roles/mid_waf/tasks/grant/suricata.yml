@@ -5,6 +5,7 @@
     path: "{{ v_suricata_root_directory }}/{{ item.domain }}"
     state: directory
     mode: 0755
+  when: item.domain is defined
   with_items: "{{ granted_domains }}"
 
 - name: Create bin SURICATA directories for each domain
@@ -12,6 +13,7 @@
     path: "{{ v_suricata_root_directory }}/{{ item.domain }}/bin"
     state: directory
     mode: 0755
+  when: item.domain is defined
   with_items: "{{ granted_domains }}"
 
 - name: Create etc SURICATA directories for each domain
@@ -19,6 +21,7 @@
     path: "{{ v_suricata_root_directory }}/{{ item.domain }}/etc"
     state: directory
     mode: 0755
+  when: item.domain is defined
   with_items: "{{ granted_domains }}"
 
 - name: Create log SURICATA directories for each domain
@@ -26,6 +29,7 @@
     path: "{{ v_log_path }}/suricata/{{ item.domain }}"
     state: directory
     mode: 0755
+  when: item.domain is defined
   with_items: "{{ granted_domains }}"
 
 - name: Symlink SURICATA binary for each domain
@@ -35,6 +39,7 @@
     owner: root
     group: root
     state: link
+  when: item.domain is defined
   with_items: "{{ granted_domains }}"
 
 - name: Symlink SURICATA include directories for each domain
@@ -44,6 +49,7 @@
     owner: root
     group: root
     state: link
+  when: item.domain is defined
   with_items: "{{ granted_domains }}"
 
 - name: Symlink SURICATA lib directories for each domain
@@ -53,6 +59,7 @@
     owner: root
     group: root
     state: link
+  when: item.domain is defined
   with_items: "{{ granted_domains }}"
 
 - name: Symlink SURICATA share directories for each domain
@@ -62,6 +69,7 @@
     owner: root
     group: root
     state: link
+  when: item.domain is defined
   with_items: "{{ granted_domains }}"
 
 - name: Install SURICATA default configuration from archive for each domain
@@ -69,6 +77,7 @@
     src: "suricata.config.tar.gz"
     dest: "{{ v_suricata_root_directory }}/{{ item.domain }}/etc/"
     copy: yes
+  when: item.domain is defined
   with_items: "{{ granted_domains }}"
 
 - name:  Install SURICATA config file for each domain
@@ -79,6 +88,7 @@
     group: root
     mode: 0644
     backup: yes
+  when: item.domain is defined
   with_items: "{{ granted_domains }}"
   notify: Restart SURICATA daemon
   register: granted_suricata_domains_changed
@@ -91,6 +101,7 @@
     group: root
     mode: 0644
     backup: yes
+  when: item.domain is defined
   with_items: "{{ granted_domains }}"
   notify: Restart SURICATA daemon
   register: granted_suricata_domains_changed

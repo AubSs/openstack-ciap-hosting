@@ -5,7 +5,7 @@
   with_first_found:
     - files:
         - "domains.yml"
-      skip: true
+      errors: ignore
   tags:
     - low_fw
     - init
@@ -21,11 +21,11 @@
     - init
     - low_fw
 
-- import_tasks: grant/sudoers.yml
-  tags:
-    - init
-    - grantdomain
-    - low_fw
+#- import_tasks: grant/sudoers.yml
+#  tags:
+#    - init
+#    - grantdomain
+#    - low_fw
 
 - import_tasks: grant/nginx_directories.yml
   tags:
@@ -61,10 +61,10 @@
 #    - grantdomain
 #    - low_fw
 
-- import_tasks: revoke/sudoers.yml
-  tags:
-    - revokedomain
-    - low_fw
+#- import_tasks: revoke/sudoers.yml
+#  tags:
+#    - revokedomain
+#    - low_fw
 
 - import_tasks: revoke/nginx.yml
   tags:

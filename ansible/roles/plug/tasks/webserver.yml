@@ -23,7 +23,6 @@
     - php-opcache
     - php-mcrypt
     - php-cli
-    - php-gd
     - php-curl
     - php-mysql
     - php-fpm

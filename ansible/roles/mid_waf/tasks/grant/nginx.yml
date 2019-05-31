@@ -9,6 +9,7 @@
     group: root
     mode: 0644
     backup: yes
+  when: item.domain is defined
   with_items: 
     - "{{ granted_domains }}"
   notify: Reload nginx daemon
@@ -18,6 +19,7 @@
     path: "{{ v_log_path }}/nginx/{{ item.domain }}/"
     state: directory
     mode: 0755
+  when: item.domain is defined
   with_items: 
     - "{{ granted_domains }}"
   notify: Reload nginx daemon

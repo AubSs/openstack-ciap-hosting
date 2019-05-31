@@ -8,6 +8,7 @@
     group: root
     mode: 0644
     backup: no
+  when: item.domain is defined
   with_items: "{{ granted_domains }}"
   notify: Restart SURICATA daemon
   register: granted_suricata_domains_changed

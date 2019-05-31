@@ -103,7 +103,7 @@ resources:
       name:
         list_join:
           - '-'
-          - ['ciap', { get_param: 'OS::stack_name' }, 'up-lb']
+          - ['ciap', { get_param: 'OS::stack_name' }, 'up_lb']
       image: { get_param: server_image }
       flavor: { get_param: server_flavor }
       ssh_user: { get_param: ssh_username }
@@ -115,7 +115,7 @@ resources:
         'mid_waf_lb_ip': { get_attr: [ mid_waf_servers, lb_address ] },
         'mid_vpn_lb_ip': { get_attr: [ mid_vpn_servers, lb_address ] },
         'ciap': { get_param: 'OS::stack_name' },
-        'instance': 'up-lb',
+        'instance': 'up_lb',
         'metrology_ip': { get_attr: [ low_met_server, ip ]}
       }
 
@@ -157,7 +157,7 @@ resources:
       name:
         list_join:
           - '-'
-          - ['ciap', { get_param: 'OS::stack_name' }, 'mid-waf']
+          - ['ciap', { get_param: 'OS::stack_name' }, 'mid_waf']
       image: { get_param: server_image }
       flavor: { get_param: server_flavor }
       ssh_user: { get_param: ssh_username }
@@ -168,7 +168,7 @@ resources:
       metadata: {
         'low_fw_lb_ip': { get_attr: [ low_fw_servers, lb_address ] },
         'ciap': { get_param: 'OS::stack_name' },
-        'instance': 'mid-waf',
+        'instance': 'mid_waf',
         'metrology_ip': { get_attr: [ low_met_server, ip ]}
       }
 
@@ -178,7 +178,7 @@ resources:
       name:
         list_join:
           - '-'
-          - ['ciap', { get_param: 'OS::stack_name' }, 'mid-vpn']
+          - ['ciap', { get_param: 'OS::stack_name' }, 'mid_vpn']
       image: { get_param: server_image }
       flavor: { get_param: server_flavor }
       ssh_user: { get_param: ssh_username }
@@ -188,7 +188,7 @@ resources:
       admin_ip: { get_attr: [ admin_server, private_ip ]}
       metadata: {
         'ciap': { get_param: 'OS::stack_name' },
-        'instance': 'mid-vpn',
+        'instance': 'mid_vpn',
         'metrology_ip': { get_attr: [ low_met_server, ip ]}
       }
 
@@ -238,7 +238,7 @@ resources:
       name:
         list_join:
           - '-'
-          - ['ciap', { get_param: 'OS::stack_name' }, 'low-fw']
+          - ['ciap', { get_param: 'OS::stack_name' }, 'low_fw']
       image: { get_param: server_image }
       flavor: { get_param: server_flavor }
       ssh_user: { get_param: ssh_username }
@@ -248,7 +248,7 @@ resources:
       admin_ip: { get_attr: [ admin_server, private_ip ]}
       metadata: {
         'ciap': { get_param: 'OS::stack_name' },
-        'instance': 'low-fw',
+        'instance': 'low_fw',
         'metrology_ip': { get_attr: [ low_met_server, ip ]}
       }
 

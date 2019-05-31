@@ -10,9 +10,8 @@
     force: yes
     group: root
     mode: 0644
+  when: item.domain is defined
   with_items:
     - "{{ granted_domains }}"
-  when:
-    - granted_domains is defined
   notify: Reload iptables daemon
 

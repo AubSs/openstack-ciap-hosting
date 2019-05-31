@@ -3,7 +3,7 @@
 - name: Set Wordpress path variable
   set_fact:
     wordpress_path: "/var/www"
-
+  
 - name: Extract WordPress 5.2.1
   unarchive:
     src: wordpress_5-2-1.tar.gz

@@ -5,7 +5,7 @@
   with_first_found:
     - files:
         - "domains.yml"
-      skip: true
+      errors: ignore
   tags:
     - init
     - revokedomain

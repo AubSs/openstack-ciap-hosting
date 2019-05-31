@@ -20,7 +20,6 @@
         mode=0600
 
 - name: Format swap file
-  sudo: yes
   command: "mkswap {{ swap_file }}"
   when: not swap_file_check.stat.exists
 
@@ -34,13 +33,11 @@
          state=present
 
 - name: Turn on swap
-  sudo: yes
   command: swapon -a
   when: not swap_file_check.stat.exists
 
 - name: Set swappiness
-  sudo: yes
   sysctl:
     name: vm.swappiness
-    value: 1
+    value: "1"
 

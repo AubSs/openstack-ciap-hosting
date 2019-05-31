@@ -48,14 +48,14 @@ resources:
       name:
         list_join:
           - '-'
-          - ['ciap', { get_param: ciap_name }, 'low-met']
+          - ['ciap', { get_param: ciap_name }, 'low_met']
       image: { get_param: image }
       flavor: { get_param: flavor }
       metadata: {
         map_merge: [
           { 'ssh_user': { get_param: ssh_user } },
           { 'ciap': { get_param: ciap_name } },
-          { 'instance': 'low-met' },
+          { 'instance': 'low_met' },
           { get_param: metadata }
         ]
       }

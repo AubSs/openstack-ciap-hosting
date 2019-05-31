@@ -12,4 +12,5 @@
     - "{{ granted_domains }}"
   when:
     - granted_domains is defined
+    - item.domain is defined
   notify: Restart telegraf daemon

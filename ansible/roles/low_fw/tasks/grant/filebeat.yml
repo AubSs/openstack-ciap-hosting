@@ -8,7 +8,7 @@
     backup: yes
     group: root
     mode: 0640
-  with_items: 
+  when: item.domain is defined
+  with_items:
      - "{{ granted_domains }}"
-     - "{{ ec2_low_met_private_dns_names }}"
   notify: Restart filebeat daemon

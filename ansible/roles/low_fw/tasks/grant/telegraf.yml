@@ -8,6 +8,7 @@
     backup: yes
     group: root
     mode: 0644
-  with_items: 
+  when: item.domain is defined
+  with_items:
     - "{{ granted_domains }}"
   notify: Restart telegraf daemon

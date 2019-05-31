@@ -11,12 +11,12 @@
     - init
     - plug
 
-- import_tasks: wordpress.yml
+- import_tasks: webserver.yml
   tags:
     - init
     - plug
 
-- import_tasks: webserver.yml
+- import_tasks: wordpress.yml
   tags:
     - init
     - plug

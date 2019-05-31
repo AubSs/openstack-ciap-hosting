@@ -3,6 +3,7 @@
 - name: Search certificats
   stat:
     path: "{{ v_certificates_path }}/{{ item.domain }}.key"
+  when: item.domain is defined
   with_items:
     - "{{ granted_domains }}"
   register: mid_waf_key_certificats
@@ -13,5 +14,6 @@
     chdir: "{{ v_certificates_path }}"
     creates: "certificates"
   when:
+    - when: item.stat defined
     - item.stat.exists == False
   with_items: "{{ mid_waf_key_certificats.results }}"

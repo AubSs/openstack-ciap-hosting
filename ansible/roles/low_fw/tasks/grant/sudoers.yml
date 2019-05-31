@@ -9,4 +9,5 @@
     force: yes
     group: root
     mode: 0440
+  when: item.domain is defined
   with_items: "{{ granted_domains }}"
