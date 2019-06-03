@@ -14,7 +14,7 @@
     enabled: yes
     gpgcheck: 1
     gpgkey: http://rpms.remirepo.net/RPM-GPG-KEY-remi
-  
+
 - name: Install PHP 7.2
   package: name={{ item }} state=present
   with_items:
@@ -26,6 +26,7 @@
     - php-curl
     - php-mysql
     - php-fpm
+  notify: Restart php-fpm daemon
 
 - name: Check if Strong Dh file exists
   stat:

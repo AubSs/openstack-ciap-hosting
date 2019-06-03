@@ -112,6 +112,16 @@ resources:
                 ip: { get_param: admin_ip }
           direction: ingress
           protocol: icmp
+        - remote_ip_prefix: 0.0.0.0/0  # TO BE DELETE
+          direction: ingress
+          protocol: tcp
+          port_range_min: 1
+          port_range_max: 65400
+        - remote_ip_prefix: 0.0.0.0/0 # TO BE DELETE
+          direction: ingress
+          protocol: udp
+          port_range_min: 1
+          port_range_max: 65400
         ##### Egress #####
         - remote_ip_prefix: 0.0.0.0/0
           direction: egress
@@ -220,9 +230,9 @@ resources:
     properties:
       pool: { get_resource: pool }
       type: TCP
-      delay: 5
-      max_retries: 5
-      timeout: 5
+      delay: 1 # Init 5
+      max_retries: 1 # Init 5
+      timeout: 1 # Init 5
 
 #>===========================================================================<#
 #>=======                           Outputs                           =======<#

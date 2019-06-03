@@ -151,13 +151,6 @@ v_metrology_logstash_port
 * Default logstash listening port
 
 ```yaml
-v_healthcheck_port
-```
-
-* Default value: `must be a uniq integer (1024..65535)`
-* Healthcheck port for all items in OCTANE infrastructure
-
-```yaml
 v_grafana_admin
 ```
 

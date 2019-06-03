@@ -4,7 +4,7 @@ global
   user haproxy
   group haproxy
   daemon
- 
+
 defaults
   log     global
   mode    tcp
@@ -23,7 +23,7 @@ listen stats
   stats uri /{{ v_haproxy_stats_uri }}  # Stats URI
 
 listen healthcheck
-  bind *:{{ v_healthcheck_port }}
+  bind *:65000
   mode http
   monitor-uri /
   errorfile 200 /etc/haproxy/200_http_ok

@@ -61,7 +61,7 @@
     force: yes
 
 - name: Install Telemetry
-  package: name={{item}} state=present
+  package: name={{ item }} state=present
   with_items:
     - filebeat
     - telegraf

@@ -4,6 +4,9 @@
   package:
     name: haproxy
     state: present
+  tags:
+    - init
+    - healtcheck
 
 - name: Add healtcheck answer configuration file to haproxy directory
   copy:
@@ -15,6 +18,9 @@
     group: root
     mode: 0644
   notify: Start haproxy daemon
+  tags:
+    - init
+    - healtcheck
 
 - name: Add configuration file to haproxy directory
   template:
@@ -26,3 +32,6 @@
     group: root
     mode: 0644
   notify: Start haproxy daemon
+  tags:
+    - init
+    - healtcheck

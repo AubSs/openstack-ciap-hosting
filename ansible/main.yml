@@ -22,6 +22,7 @@
   gather_facts: yes
   roles:
     - common
+    - healtcheck
     - low_fw
 
 - name: Setup Mid Waf
@@ -30,6 +31,7 @@
   gather_facts: yes
   roles:
     - common
+    - healtcheck
     - mid_waf
 
 - name: Setup UP LB
@@ -38,5 +40,6 @@
   gather_facts: yes
   roles:
     - common
+    - healtcheck
     - up_lb
 

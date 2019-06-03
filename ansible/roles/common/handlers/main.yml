@@ -34,20 +34,6 @@
     state: restarted
   ignore_errors: true
 
-- name: Reload haproxy daemon
-  systemd:
-    name: haproxy
-    enabled: yes
-    state: reloaded
-  ignore_errors: true
-
-- name: Start haproxy daemon
-  systemd:
-    name: haproxy
-    enabled: yes
-    state: restarted
-  ignore_errors: true
-
 - name: Reload iptables daemon
   systemd:
     name: iptables

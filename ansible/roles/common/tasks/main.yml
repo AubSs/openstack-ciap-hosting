@@ -14,11 +14,6 @@
    - init
    - common
 
-- import_tasks: init/haproxy_healthcheck.yml
-  tags:
-   - init
-   - common
-
 - import_tasks: init/ssl.yml
   tags:
    - init
