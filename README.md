@@ -1,15 +1,15 @@
-# CIAP OCTANE Openstack
+# Openstack cIAP OCTANE
 
-## What is OCTANE ?
+## What's OCTANE ?
 
 **OCTANE** is:
 
-* A CIAP (**C**loud **I**nternet **A**ccess **P**oint). Mainly, it is a **security product** between Internet and your public application hosted in your private zone
+* A cIAP (**C**loud **I**nternet **A**ccess **P**oint). Mainly, it is a **security product** between Internet and your public application hosted in your private zone
 * The acronym (with imagination and goodwill) of **Opensource cIAP Nextgen**
-* A Societe Generale Open Source project developped within **Public Cloud Feature Team (Cloud Center Of Excellence)** by:
+* A [Societe Generale](https://www.societegenerale.com) Open Source project developped within **Public Cloud Feature Team (Cloud Center Of Excellence)** by:
     * [Aubin LAGORCE](https://github.com/AubSs) for Openstack
     * [Eric BOUTEVILLE](https://github.com/qrn77) for [AWS](https://github.com/societe-generale/OCTANE)
-* Is currently available for AWS, Azure and Openstack
+* Is currently available for [AWS](https://github.com/societe-generale/OCTANE) & Openstack
 
 **OCTANE** can:
 
@@ -24,101 +24,67 @@
 
 ## How OCTANE is designed ?
 
-There are several layers (from the most exposed -Internet- to the less exposed -Internal-):
-
 [![ARCHITECTURE](docs/archi.png)]()
 
-* redundant load-balancers
-* redundant filtering layer
-* redundant reverse-proxies
-* redundant proxies with SSL terminaison
-* redundant WAF or TCP relay (it depends on the protocol used)
-* redundant Antivirus & IDS
-* redundant VPN
-* redundant firewalls
+There are several layers (from the most exposed -Internet- to the less exposed -Internal-) :
+
+* Redundant load-balancers
+* Redundant filtering layer
+* Redundant reverse-proxies
+* Redundant proxies with SSL terminaison
+* Redundant WAF or TCP relay (it depends on the protocol used)
+* Redundant Antivirus & IDS
+* Redundant VPN
+* Redundant firewalls
 
 Those functionnalities are deployed by:
-* The **heat template** aims to build the Openstack infrastructure
-* The **ansible playbook** will configure all software components
+* The **Openstack orchestration heat template** aims to build the Openstack infrastructure
+* The **Ansible playbook** will configure all software components
+
+For further details, a more complete READme is available in each directory.
 
 
-## How to use OCTANE ?
+## Detailed documentation
 
-### Requirements
+#### Architecture
 
-* An Openstack **Stein** version with these modules:
-    * Cinder
-    * Neutron
-    * Glance
-    * Swift
-    * Heat
-    * Octavia
-    * Ceilometer
-    * Aodh
-    * Horizon
+* [Orchestration](heat/README.md "Orchestration")
+* [Architecture](docs/architecture.md "Architecture")
+* [Ansible](ansible/README.md "Ansible")
+    * [Ansible variables](ansible/vars/README.md "Ansible variables")
+    * [Ansible roles](ansible/roles/README.md "Ansible roles")
+    * [Ansible global variables](ansible/group_vars/README.md "Ansible global variables")
 
-* Python 3.6 (or >) with these modules:
-    * openstacksdk
+#### Installation & Run
 
-### CLI
-Setup your configuration file (see below)
+* [Homepage](docs/README.md "Homepage")
+* [Openstack](openstack/README.md "Openstack")
 
-```sh
-# Create a new instance
-python3 ciap.py --new <stack name> -c <configuration file>
 
-# Delete an instance
-python3 ciap.py --delete <stack name> -c <configuration file>
+## Roadmap
 
-# List all CIAP instances
-python3 ciap.py --list -c <configuration file>
-```
+* Common referential (LDAP/other), this will permit to link users to domains/VPN.
+* API to manage web exposition
 
-### Configuration file
 
-```ini
-[Openstack]
-auth_url = http://192.168.1.48/identity/v3
-username = admin
-password = xxxx
-project_id = 5925a4a86d4e4434a94c558df006bfdf
-project_name = admin
-user_domain_name = Default
-project_domain_name = default
-region_name = RegionOne
-interface = public
-identity_api_version = 3
+## License
 
-[CIAP]
-stack_name      = aubin
-stack_template  = heat/main.yaml
-public_key_file = ~/.ssh/id_rsa.pub
+[GPLv2](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
 
-[Orchestration]
-server_image    = <uuid>    # [Required] Image used by the servers
-public_net      = <string>  # [Optional] Public Network name used by the ciap
-server_flavor   = <string>  # [Optional] Flavor used by the servers
-deploy_plug     = <bool>    # [Optional] (Default to false) Deploy a demo plug
-cidr            = <cidr/22> # [Optional] CIDR used by the ciap
-ssh_username    = <string>  # [Optional] SSH User to connect to the servers
-ssh_public_key  = <string>  # [Optional] SSH public key to install in all servers
-```
 
-## Misc
+## Authors
 
-Reach openstack vm outside host
+This project has been created in 2019 by [Aubin LAGORCE](https://github.com/AubSs) and Product Owned by [Yannick NEFF](https://github.com/yannickneff) based on the work of [Eric BOUTEVILLE](https://github.com/qrn77), for its [AWS](https://github.com/societe-generale/OCTANE) implementation.
 
-```sh
-echo 1 > /proc/sys/net/ipv4/ip_forward
-echo 1 > /proc/sys/net/ipv4/conf/ens160/proxy_arp
-iptables -t nat -A POSTROUTING -o ens160 -j MASQUERADE
-```
 
-Get latest openstack sdk
+## Contributors
 
-```sh
-sudo pip3 install git+https://github.com/openstack/openstacksdk.git
-```
+* [Lucas BARRIERE](https://github.com/urluba)
+* [Eric BOUTEVILLE](https://github.com/qrn77)
+* [Yannick NEFF](https://github.com/yannickneff)
+* [Pierre LEVESQUE](https://github.com/PierreLev74)
 
+
+## Sponsorship, Softwares & Used Components
 
 [![HLD](docs/soft.png)]()
