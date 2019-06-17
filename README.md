@@ -6,7 +6,8 @@
 
 * A cIAP (**C**loud **I**nternet **A**ccess **P**oint). Mainly, it is a **security product** between Internet and your public application hosted in your private zone
 * The acronym (with imagination and goodwill) of **Opensource cIAP Nextgen**
-* A [Societe Generale](https://www.societegenerale.com) Open Source project developped within **Public Cloud Feature Team (Cloud Center Of Excellence)** by:
+* A [Societe Generale](https://www.societegenerale.com) Open Source project developped within **Public Cloud 
+* Feature Team (Cloud Center Of Excellence)** by:
     * [Aubin LAGORCE](https://github.com/AubSs) for Openstack
     * [Eric BOUTEVILLE](https://github.com/qrn77) for [AWS](https://github.com/societe-generale/OCTANE)
 * Is currently available for [AWS](https://github.com/societe-generale/OCTANE) & Openstack
@@ -46,19 +47,14 @@ For further details, a more complete READme is available in each directory.
 
 ## Detailed documentation
 
-#### Architecture
-
-* [Orchestration](heat/README.md "Orchestration")
+* [Build & Run](docs/README.md "Build & Run")
 * [Architecture](docs/architecture.md "Architecture")
+* [Bring up a complete OpenStack environment](openstack/README.md "Bring up a complete OpenStack environment")
+* [Openstack Orchestration](heat/README.md "Openstack Orchestration")
 * [Ansible](ansible/README.md "Ansible")
     * [Ansible variables](ansible/vars/README.md "Ansible variables")
     * [Ansible roles](ansible/roles/README.md "Ansible roles")
     * [Ansible global variables](ansible/group_vars/README.md "Ansible global variables")
-
-#### Installation & Run
-
-* [Homepage](docs/README.md "Homepage")
-* [Openstack](openstack/README.md "Openstack")
 
 
 ## Roadmap

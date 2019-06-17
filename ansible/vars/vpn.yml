@@ -6,14 +6,14 @@ granted_vpn_streams:
   - stream: "443"
   - stream: "3389"
 
-openvpn_grant_these_clients:
+openvpn_grant_clients:
   - name: "riri"
     ip: 7
     email: "riri@mail.com"
     client_network: "10.10.100.77"
     client_netmask: "255.255.255.255"
 
-openvpn_revoke_these_clients:
+openvpn_revoke_clients:
   - name: "lulu"
     ip: 5
     email: "lulu@mail.com"

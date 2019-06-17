@@ -1,4 +1,4 @@
-# Configure a newly empty stack
+# Ansible Global variables
 
 This file contains global variables you may (or not) configure.
 

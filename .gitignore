@@ -6,6 +6,3 @@
 
 # MacOS
 .DS_Store
-
-# TMP
-ansible-old
