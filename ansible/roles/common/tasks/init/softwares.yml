@@ -18,11 +18,17 @@
     state: present
 
 - name: Install editors
-  package: name={{item}} state=present
+  package: name={{ item }} state=present
   with_items:
     - vim-enhanced
     - emacs-nox
     - nano
+
+- name: Install utils
+  package: name={{ item }} state=present
+  with_items:
+    - zip
+    - unzip
 
 - name: Install Python 3.6
   package: name={{item}} state=present

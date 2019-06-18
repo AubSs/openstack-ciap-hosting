@@ -1,12 +1,12 @@
 ---
 
-#- name: Setup Low Met
-#  hosts: low_met
-#  become: yes
-#  gather_facts: yes
-#  roles:
-#    - common
-#    - low_met
+- name: Setup Low Met
+  hosts: low_met
+  become: yes
+  gather_facts: yes
+  roles:
+    - common
+    - low_met
 
 - name: Setup plug
   hosts: plug

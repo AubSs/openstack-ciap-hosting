@@ -45,15 +45,6 @@
     - "filter"
   notify: Enable Logstash systemd service
 
-- name: Add proxy configuration for system
-  lineinfile:
-    dest: "/etc/environment"
-    line : "{{ item }}"
-  with_items:
-    - "export HTTP_PROXY={{ v_http_proxy }}"
-    - "export HTTPS_PROXY={{ v_https_proxy }}"
-    - "export no_proxy=169.254.169.254,localhost,127.0.0.1"
-
 - name: Install influxdb plugin
   command: /usr/share/logstash/bin/logstash-plugin install logstash-output-influxdb
   notify: Enable Logstash systemd service

@@ -5,7 +5,7 @@
   with_first_found:
     - files:
         - "domains.yml"
-      skip: true
+      errors: ignore
   tags:
     - init
     - grantdomain
@@ -21,12 +21,7 @@
     - init
     - low_met
 
-- import_tasks: init/rsyslog.yml
-  tags:
-    - init
-    - low_met
-
-- import_tasks: init/selinux.yml
+- import_tasks: init/influxdb.yml
   tags:
     - init
     - low_met
@@ -36,7 +31,12 @@
     - init
     - low_met
 
-- import_tasks: init/influxdb.yml
+- import_tasks: init/rsyslog.yml
+  tags:
+    - init
+    - low_met
+
+- import_tasks: init/selinux.yml
   tags:
     - init
     - low_met

@@ -1,11 +1,26 @@
 ---
 
+- name: Install InfluxDB
+  package:
+    name: influxdb
+    state: present
+
 - name: Enable influxdb systemd service
   systemd:
-    name: "influxdb"
+    name: influxdb
     daemon_reload: yes
     enabled: yes
     state: restarted
+
+- name: Install Java
+  package: name={{ item }} state=present
+  with_items:
+    - java-1.8.0-openjdk
+  
+- name: Install logstash
+  package:
+    name: logstash
+    state: present
 
 - name: Enable Logstash systemd service
   systemd:
@@ -14,9 +29,24 @@
     enabled: yes
     state: restarted
 
+- name: Add the grafana repository
+  copy:
+    src: grafana.repo
+    dest: /etc/yum.repos.d/
+    owner: root
+    group: root
+    mode: 0400
+    backup: yes
+    force: yes
+
+- name: Install grafana
+  package:
+    name: grafana
+    state: present
+  
 - name: Enable and restart grafana systemd service
   systemd:
-    name: "grafana-server"
+    name: grafana-server
     daemon_reload: yes
     enabled: yes
     state: restarted

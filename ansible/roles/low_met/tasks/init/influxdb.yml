@@ -8,7 +8,6 @@
     backup: yes
     group: root
     mode: 0644
-  notify: Enable influxdb systemd service
 
 - name: Create admin user
   uri:
