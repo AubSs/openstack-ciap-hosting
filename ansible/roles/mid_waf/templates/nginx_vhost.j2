@@ -77,7 +77,7 @@ server {
     location /mingtree/ {
         modsecurity off;
         proxy_set_header Host $host;
-        proxy_pass https://{{ metrology_ip }}:{{ v_metrology_grafana_port }}/mingtree/;
+        proxy_pass https://{{ metrology_ip }}:{{ v_metrology_grafana_port }}/;
     }
 
     error_page 404 /404.html;

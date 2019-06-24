@@ -1,12 +1,12 @@
 # Telegraf configuration 
 [global_tags]
-  az = "{{ ec2_availabilityzone }}"
-  ciap = "{{ ec2_aws_cloudformation_stack_name }}"
-  bl = "{{ ec2_bl }}"
-  env = "{{ ec2_env }}"
-  fonction = "{{ ec2_fonction }}"
-  region = "{{ ec2_region }}"
-  stage = "{{ ec2_stage }}"
+  az = "{{ openstack.location.zone }}"
+  ciap = "{{ ciap }}"
+  bl = "TO BE DELETED"
+  env = "TO BE DELETED"
+  fonction = "TO BE DELETED"
+  region = "{{ openstack.location.region_name }}"
+  stage = "TO BE DELETED"
 
 [agent]
   interval = "60s"
@@ -20,30 +20,20 @@
   debug = false
   quiet = true
   logfile = "{{ v_log_path }}/telegraf/telegraf.log"
-  hostname = "{{ ec2_name }}"
+  hostname = "{{ openstack.name }}"
   omit_hostname = false
 
 [[outputs.http]]
-  url = "https://{{ ec2_low_met_private_dns_names }}:{{ v_metrology_influxdb_port }}"
+  url = "https://{{ metrology_ip }}:{{ v_metrology_influxdb_port }}"
   timeout = "5s"
-  tls_cert = "{{ v_certificates_path}}/telegraf.crt"
-  tls_key = "{{ v_certificates_path}}/telegraf.key"
+  tls_cert = "{{ v_certificates_path }}/telegraf.crt"
+  tls_key = "{{ v_certificates_path }}/telegraf.key"
   insecure_skip_verify = true
   data_format = "json"
   [outputs.http.headers]
       Content-Type = "application/json; charset=utf-8"
 
 {% for item in granted_domains -%}
-{% if item.http| bool -%}
-[[inputs.net_response]]
-  protocol = "tcp"
-  address = "{{ item.http_listening_ip }}:{{ item.http_listening_port }}"
-  timeout = "2s"
-  [inputs.net_response.tags]
-      domain = "{{ item.domain }}"
-      component = "waf"
-{%- endif %}
-
 [[inputs.net_response]]
   protocol = "tcp"
   address = "{{ item.http2_listening_ip }}:{{ item.http2_listening_port }}"
@@ -71,30 +61,25 @@
 {% if item.backend_protocol  == "http" -%}
 [[inputs.net_response]]
   protocol = "tcp"
-  address = "{{ clb_mid_low_dns_name }}:{{ item.http_listening_port }}"
+  address = "{{ low_fw_lb_ip }}:{{ item.http_listening_port }}"
   timeout = "2s"
   [inputs.net_response.tags]
       domain = "{{ item.domain }}"
       component = "elb"
 
 {%- endif %}
-
 {% if item.backend_protocol  == "https" -%}
 [[inputs.net_response]]
   protocol = "tcp"
-  address = "{{ clb_mid_low_dns_name }}:{{ item.https_listening_port }}"
+  address = "{{ low_fw_lb_ip }}:{{ item.https_listening_port }}"
   timeout = "2s"
   [inputs.net_response.tags]
       domain = "{{ item.domain }}"
       component = "elb"
 
 {%- endif %}
-
 [[inputs.nginx]]
  urls = [
-{% if item.http| bool -%}
- "http://127.0.0.1:{{ item.http_listening_port }}/nginx_status",
-{%- endif %}
  "https://127.0.0.1:{{ item.https_listening_port }}/nginx_status", 
  "http://127.0.0.1:{{ item.http2_listening_port }}/nginx_status"]
   insecure_skip_verify = true

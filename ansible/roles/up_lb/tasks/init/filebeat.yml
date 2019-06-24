@@ -1,12 +1,12 @@
 ---
 
-- name:  Create filebeat directory 
+- name: Create filebeat directory 
   file:
-      path: "{{ v_log_path }}/filebeat"
-      state: directory
-      mode: 0755
+    path: "{{ v_log_path }}/filebeat"
+    state: directory
+    mode: 0755
 
-- name:  Install filebeat config file
+- name: Install filebeat config file
   template:
     src: "filebeat_yml.j2"
     dest: "/etc/filebeat/filebeat.yml"
@@ -15,5 +15,5 @@
     group: root
     mode: 0640
   with_items:
-     - "{{ ec2_low_met_private_dns_names }}"
+     - "{{ mid_waf_lb_ip }}"
   notify: Restart filebeat daemon

@@ -1,4 +1,3 @@
-# configured for {{ ec2_stage }}_{{ ec2_fonction }} EC2 instance
 filebeat.inputs:
 - type: log
   enabled: true
@@ -6,14 +5,14 @@ filebeat.inputs:
     - "{{ v_log_path }}/iptables.log"
   fields:
         log_type: iptables_access
-        az : "{{ ec2_availabilityzone }}"
-        ciap : "{{ ec2_aws_cloudformation_stack_name }}"
-        bl : "{{ ec2_bl }}"
-        env : "{{ ec2_env }}"
-        fonction : "{{ ec2_fonction }}"
-        region : "{{ ec2_region }}"
-        stage : "{{ ec2_stage }}"
-        hostname: "{{ ec2_name }}"
+        az : "{{ openstack.location.zone }}"
+        ciap : "{{ ciap }}"
+        bl : "TO BE DELETED"
+        env : "TO BE DELETED"
+        fonction : "TO BE DELETED"
+        region : "{{ openstack.location.region_name }}"
+        stage : "TO BE DELETED"
+        hostname: "{{ openstack.name }}"
         genre: "iptables"
   exclude_lines: ['(.*)(DPT={{ v_healthcheck_port }})(.*)', '(.*)(TTL=64)(.*)']
 
@@ -25,7 +24,7 @@ setup.template.settings:
   index.number_of_shards: 3
 
 output.logstash:
-  hosts: ["{{ ec2_low_met_private_dns_names }}:{{ v_metrology_logstash_port }}"]
+  hosts: ["{{ metrology_ip }}:{{ v_metrology_logstash_port }}"]
   ssl.enabled: true
   ssl.certificate: "{{ v_certificates_path }}/filebeat.crt"
   ssl.key: "{{ v_certificates_path }}/filebeat.key" 

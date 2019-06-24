@@ -1,9 +1,9 @@
 ---
 
 granted_domains:
-  - backend_ip_or_fqdn: 10.1.0.135
-    backend_port: 80
-    backend_protocol: http # can be https
+  - backend_ip_or_fqdn: 10.1.0.157
+    backend_port: 443
+    backend_protocol: https # can be https
     domain: wordpress.ciap.lagorce.io
     email: aubin@lagorce.io
     havp_listening_ip: 127.0.0.1
@@ -17,26 +17,7 @@ granted_domains:
     https_listening_ip: 0.0.0.0
     https_listening_port: 443
     id: 50
-    mod_security: 'on' # can be http
-    preserve_host: true # can be false
-    proxy_timeout: 5
-  - backend_ip_or_fqdn: 10.1.0.135
-    backend_port: 443
-    backend_protocol: https # can be https
-    domain: wordpress.ciap.lagorce.io
-    email: aubin@lagorce.io
-    havp_listening_ip: 127.0.0.1
-    havp_listening_port: 20012
-    havp_protocol: http
-    http: true
-    http2_listening_ip: 127.0.0.1
-    http2_listening_port: 20013
-    http_listening_ip: 0.0.0.0
-    http_listening_port: 80
-    https_listening_ip: 0.0.0.0
-    https_listening_port: 443
-    id: 51
-    mod_security: 'on' # can be http
+    mod_security: 'on' # can be 'off'
     preserve_host: true # can be false
     proxy_timeout: 5
 

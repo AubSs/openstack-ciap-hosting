@@ -41,19 +41,19 @@
     - init
     - mid_waf
 
-#- import_tasks: grant/filebeat.yml
-#  tags:
-#    - init
-#    - grantdomain
-#    - revokedomain
-#    - mid_waf
+- import_tasks: grant/filebeat.yml
+  tags:
+    - init
+    - grantdomain
+    - revokedomain
+    - mid_waf
 
-#- import_tasks: grant/telegraf.yml
-#  tags:
-#    - init
-#    - grantdomain
-#    - revokedomain
-#    - mid_waf
+- import_tasks: grant/telegraf.yml
+  tags:
+    - init
+    - grantdomain
+    - revokedomain
+    - mid_waf
 
 - import_tasks: grant/iptables.yml
   tags:

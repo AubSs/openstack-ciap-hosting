@@ -47,24 +47,24 @@
     - grantdomain
     - low_fw
 
-#- import_tasks: grant/filebeat.yml
-#  tags:
-#    - init
-#    - revokedomain
-#    - grantdomain
-#    - low_fw
+- import_tasks: grant/filebeat.yml
+  tags:
+    - init
+    - revokedomain
+    - grantdomain
+    - low_fw
 
-#- import_tasks: grant/telegraf.yml
-#  tags:
-#    - init
-#    - revokedomain
-#    - grantdomain
-#    - low_fw
+- import_tasks: grant/telegraf.yml
+  tags:
+    - init
+    - revokedomain
+    - grantdomain
+    - low_fw
 
-#- import_tasks: revoke/sudoers.yml
-#  tags:
-#    - revokedomain
-#    - low_fw
+- import_tasks: revoke/sudoers.yml
+  tags:
+    - revokedomain
+    - low_fw
 
 - import_tasks: revoke/nginx.yml
   tags:

@@ -43,9 +43,14 @@ class Inventory(object):
         info = self.data['_meta']['hostvars'].get(id, 'null')
         print(json.dumps(info, indent=4))
 
-    def list(self):
+    def list_min(self):
         for server in self.data['_meta']['hostvars']:
             del(self.data['_meta']['hostvars'][server]['openstack'])
+        print(json.dumps(self.data, indent=4))
+
+    def list(self):
+        #for server in self.data['_meta']['hostvars']:
+        #    del(self.data['_meta']['hostvars'][server]['openstack'])
         print(json.dumps(self.data, indent=4))
 
 
@@ -54,12 +59,15 @@ if __name__ == "__main__":
     parser.add_argument('--public', action='store_true', help='Use public address for ansible host')
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--list', help='List active servers', action='store_true')
+    group.add_argument('--list-min', help='List active servers (essential data)', action='store_true')
     group.add_argument('--host', help='List details about the specific host')
     args = parser.parse_args()
 
     inventory = Inventory(args.public)
     if args.list:
         inventory.list()
+    elif args.list_min:
+        inventory.list_min()
     elif args.host:
         inventory.get_host_info(args.host)
     else:

@@ -1,6 +1,6 @@
 ---
 
-- name:  Install filebeat config file
+- name: Install filebeat config file
   template:
     src: "grant/filebeat_yml.j2"
     dest: "/etc/filebeat/filebeat.yml"
