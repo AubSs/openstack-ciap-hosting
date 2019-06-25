@@ -8,8 +8,8 @@ remote-cert-tls server
 tls-version-min 1.2
 {% endif %}
 
-proto {{openvpn_proto}}
-remote {{openvpn_server_hostname}} {{openvpn_port}}
+proto {{ openvpn_proto }}
+remote {{ openvpn_server_hostname }} {{ openvpn_port }}
 dev tun
 
 resolv-retry 5
@@ -29,9 +29,9 @@ register-dns
 key-direction 1
 ca keys/{{ openvpn_ca_crt_name }}
 tls-auth keys/{{ openvpn_ta_key_name }} 1
-cert keys/{{stack }}-{{ item.email }}.crt
-key keys/{{ stack }}-{{ item.email }}.key
+cert keys/{{ ciap }}-{{ item.email }}.crt
+key keys/{{ ciap }}-{{ item.email }}.key
 
 {% if openvpn_verify_cn|bool %}
-verify-x509-name {{ stack }}-Server-{{inventory_hostname[:49]}} name
+verify-x509-name {{ ciap }}-Server-{{ inventory_hostname[:49] }} name
 {% endif %}

@@ -18,7 +18,7 @@
      }
   } else if [fields][log_type] == "vpn_disconnect" {
      grok {
-          match => [ "message" , "%{SYSLOGTIMESTAMP:timestamp} %{DATA} %{DATA:stack}-Client-%{DATA:name}@%{DATA:domain}/%{IPORHOST:source_ip}:%{DATA:source_port} SIGUSR1%{GREEDYDATA}" ]
+           match => [ "message" , "%{SYSLOGTIMESTAMP:timestamp} %{DATA} %{DATA:stack}-Client-%{DATA:name}@%{DATA:domain}/%{IPORHOST:source_ip}:%{DATA:source_port} SIGUSR1%{GREEDYDATA}" ]
            add_field => [ "az", "%{[fields][az]}" ]
            add_field => [ "ciap", "%{[fields][ciap]}" ]
            add_field => [ "bl", "%{[fields][bl]}" ]

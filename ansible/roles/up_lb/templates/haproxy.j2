@@ -20,7 +20,7 @@ listen stats
   stats enable
   stats hide-version
   http-request set-log-level silent
-  stats uri /{{ v_haproxy_stats_uri }}  # Stats URI
+  stats uri /{{ v_haproxy_stats_uri }} # Stats URI
 
 listen healthcheck
   bind *:65000
