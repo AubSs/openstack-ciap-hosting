@@ -34,6 +34,15 @@
     - healtcheck
     - mid_waf
 
+- name: Setup Mid VPN
+  hosts: mid_vpn
+  become: yes
+  gather_facts: yes
+  roles:
+    - common
+    - healtcheck
+    - mid_vpn
+
 - name: Setup UP LB
   hosts: up_lb
   become: yes

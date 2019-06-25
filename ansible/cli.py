@@ -59,7 +59,7 @@ class CLI(object):
             print(f'  - {item}')
 
     def get_tags(self):
-        return set(('init', 'grantdomain', 'revokedomain'))
+        return set(('init', 'grantdomain', 'revokedomain', 'grantvpnclient', 'revokevpnclient'))
 
     def check_tag(self, tag):
         return tag in self.get_tags()

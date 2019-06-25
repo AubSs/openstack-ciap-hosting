@@ -7,15 +7,15 @@ granted_vpn_streams:
   - stream: "3389"
 
 openvpn_grant_clients:
-  - name: "riri"
+  - name: "Aubin Lagorce"
     ip: 7
-    email: "riri@mail.com"
-    client_network: "10.10.100.77"
+    email: "aubin@lagorce.io"
+    client_network: "10.1.0.134"
     client_netmask: "255.255.255.255"
 
 openvpn_revoke_clients:
-  - name: "lulu"
-    ip: 5
-    email: "lulu@mail.com"
-    client_network: "10.10.100.77"
-    client_netmask: "255.255.255.255"
+#  - name: "lulu"
+#    ip: 5
+#    email: "lulu@mail.com"
+#    client_network: "10.10.100.77"
+#    client_netmask: "255.255.255.255"
