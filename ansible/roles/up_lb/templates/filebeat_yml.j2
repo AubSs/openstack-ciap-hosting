@@ -7,11 +7,11 @@ filebeat.inputs:
         log_type: haproxy_access
         az : "{{ openstack.location.zone }}"
         ciap : "{{ ciap }}"
-        bl : "TO BE DELETED"
-        env : "TO BE DELETED"
-        fonction : "TO BE DELETED"
+        bl : "{{ bl }}"
+        env : "{{ env }}"
+        fonction : "{{ fonction }}"
         region : "{{ openstack.location.region_name }}"
-        stage : "TO BE DELETED"
+        stage : "{{ stage }}"
         hostname: "{{ openstack.name }}"
         genre: "haproxy"
   exclude_lines: ['<STATS>', '<NOSRV>', '<stats>' ]

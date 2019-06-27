@@ -29,6 +29,7 @@
   with_items:
     - zip
     - unzip
+    - iptables-services
 
 - name: Install Python 3.6
   package: name={{item}} state=present

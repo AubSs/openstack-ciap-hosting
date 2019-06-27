@@ -4,7 +4,7 @@ description: CIAP Template
 
 #>===========================================================================<#
 #>=======                         Parameters                          =======<#
-#>===========================================================================<#
+#>===========================================================================<#1;95;0c
 parameters:
   public_net:
     type: string
@@ -137,7 +137,11 @@ resources:
         'mid_vpn_lb_ip': { get_attr: [ mid_vpn_servers, lb_address ] },
         'ciap': { get_param: 'OS::stack_name' },
         'instance': 'up_lb',
-        'metrology_ip': { get_attr: [ low_met_server, ip ]}
+        'metrology_ip': { get_attr: [ low_met_server, ip ]},
+        'bl': { get_param: bl },
+        'env': { get_param: env },
+        'stage': 'up',
+        'fonction': 'lb'
       }
 
   main_lb_floating:
@@ -190,7 +194,11 @@ resources:
         'low_fw_lb_ip': { get_attr: [ low_fw_servers, lb_address ] },
         'ciap': { get_param: 'OS::stack_name' },
         'instance': 'mid_waf',
-        'metrology_ip': { get_attr: [ low_met_server, ip ]}
+        'metrology_ip': { get_attr: [ low_met_server, ip ]},
+        'bl': { get_param: bl },
+        'env': { get_param: env },
+        'stage': 'mid',
+        'fonction': 'waf'
       }
 
   mid_vpn_servers:
@@ -210,7 +218,11 @@ resources:
       metadata: {
         'ciap': { get_param: 'OS::stack_name' },
         'instance': 'mid_vpn',
-        'metrology_ip': { get_attr: [ low_met_server, ip ]}
+        'metrology_ip': { get_attr: [ low_met_server, ip ]},
+        'bl': { get_param: bl },
+        'env': { get_param: env },
+        'stage': 'mid',
+        'fonction': 'vpn'
       }
 
 #>============================ PRIVATE ZONE ============================<#
@@ -250,7 +262,11 @@ resources:
       subnet: { get_resource: private_subnet }
       ciap_name: { get_param: 'OS::stack_name' }
       metadata: {
-        'metrology_ip': '127.0.0.1'
+        'metrology_ip': '127.0.0.1',
+        'bl': { get_param: bl },
+        'env': { get_param: env },
+        'stage': 'low',
+        'fonction': 'met'
       }
 
   low_fw_servers:
@@ -270,7 +286,11 @@ resources:
       metadata: {
         'ciap': { get_param: 'OS::stack_name' },
         'instance': 'low_fw',
-        'metrology_ip': { get_attr: [ low_met_server, ip ]}
+        'metrology_ip': { get_attr: [ low_met_server, ip ]},
+        'bl': { get_param: bl },
+        'env': { get_param: env },
+        'stage': 'low',
+        'fonction': 'fw'
       }
 
 #>============================== PLUG ZONE ==============================<#
@@ -286,7 +306,11 @@ resources:
       ciap_router: { get_resource: ciap_router }
       ciap_name: { get_param: 'OS::stack_name' }
       metadata: {
-        'metrology_ip': { get_attr: [ low_met_server, ip ]}
+        'metrology_ip': { get_attr: [ low_met_server, ip ]},
+        'bl': { get_param: bl },
+        'env': { get_param: env },
+        'stage': 'low',
+        'fonction': 'plug'
       }
 
 #>============================== ADMIN ZONE ==============================<#
