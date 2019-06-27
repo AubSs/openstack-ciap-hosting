@@ -33,12 +33,14 @@ listen reverseproxy
   log	global
   tcp-request inspect-delay 5s
   tcp-request content accept if { req_ssl_hello_type 1 }
+  use_backend openvpn if !{ req.ssl_hello_type 1 } !{ req.len 0 }
 
   {% for item in granted_domains %}
+  ### {{ item.domain }} ###
   use_backend {{ item.domain }} if { req_ssl_sni -i {{ item.domain }} }
   {% if item.alias is defined %}
-  {% for _alias in item.alias %}
   # Alias
+  {% for _alias in item.alias %}
   use_backend {{ item.domain }} if { req_ssl_sni -i {{ _alias }} }
   {% endfor %}
   {% endif %}
@@ -68,3 +70,6 @@ backend {{ item.domain }}
 
 {% endfor %}
 
+backend openvpn
+  mode tcp
+  server openvpn {{ mid_vpn_lb_ip }}:{{ v_vpn_port }}

@@ -249,7 +249,7 @@ resources:
     type: OS::Octavia::HealthMonitor
     properties:
       pool: { get_resource: pool }
-      type: TCP
+      type: HTTP
       delay: 1 # Init 5
       max_retries: 1 # Init 5
       timeout: 1 # Init 5

@@ -49,6 +49,27 @@ parameters:
   ansible_tarball:
     type: string
 
+  bl:
+    type: string
+    default: GTS
+    constraints:
+      - allowed_values:
+        - GTS
+        - BSC
+        - ITIM
+        - ITEC
+        - IBFS
+
+  env:
+    type: string
+    default: TMP
+    constraints:
+      - allowed_values:
+        - DEV
+        - HML
+        - PRD
+        - TMP
+
 #>===========================================================================<#
 #>=======                          Resources                          =======<#
 #>===========================================================================<#
