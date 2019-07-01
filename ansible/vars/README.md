@@ -1,4 +1,7 @@
-# Ansible variables
+# Ansible Variables
+
+> Return to [Homepage](../../README.md "Homepage") <br>
+  Return to [Ansible Playbook](../README.md "Ansible Playbook")
 
 #### Summary
 

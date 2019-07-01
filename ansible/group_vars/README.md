@@ -1,4 +1,7 @@
-# Ansible Global variables
+# Ansible Global Variables
+
+> Return to [Homepage](../../README.md "Homepage") <br>
+  Return to [Ansible Playbook](../README.md "Ansible Playbook")
 
 This file contains global variables you may (or not) configure.
 

@@ -1,6 +1,6 @@
 # Bring up a complete OpenStack environment
 
-> Return to [Home page](../README.md "Home page")
+> Return to [Homepage](../README.md "Homepage")
 
 The purpose of this page is to provide a guide for installing an OpenStack Stein version with all the modules necessary for the deployment of a CIAP.
 
@@ -9,7 +9,7 @@ The purpose of this page is to provide a guide for installing an OpenStack Stein
 #### Summary
 
 * [Requirements](#requirements)
-* [Optional: Set up an Hypervisor (VMware ESXi)](#optional:-set-up-an-hypervisor-(vmware-esxi))
+* [Optional Set up a VMware ESXi Hypervisor](optional-set-up-a-vmware-esxi-hypervisor)
 * [Set up a fully working environment](#set-up-a-fully-working-environment)
     * [Install Linux (Ubuntu 18.04 LTS)](#install-linux-(ubuntu-18.04-lts))
     * [Add Stack User](#add-stack-user)
@@ -19,7 +19,7 @@ The purpose of this page is to provide a guide for installing an OpenStack Stein
 * [Post installation](#post-installation)
     * [Download and install images](#download-and-install-images)
     * [Reach openstack instances outside host machine](#reach-openstack-instances-outside-host-machine)
-* [Profit !](#profit-!)
+* [Profit!](#profit!)
 
 
 ## Requirements
@@ -31,7 +31,7 @@ The following minimum requirements should support a proof-of-concept environment
 * 200 GB storage
 
 
-## Optional: Set up an Hypervisor (VMware ESXi)
+## Optional Set up a VMware ESXi Hypervisor
 
 For testing the cIAP, it’s strongly recommended to use a clean virtual machine. Using Public Cloud (AWS, Azure, GCP and so on) is not recommended since configuring the network will be difficult. Another way is to use a host on VMware ESXi. If this solution is chosen, do not forget to change the NIC teaming, however, Openstack instances will not be able to reach internet.
 
@@ -135,7 +135,7 @@ iptables -t nat -A POSTROUTING -m iprange --src-range <FLOATING_RANGE MIN>-<FLOA
 ```
 
 
-## Profit !
+## Profit!
 
 You now have a working DevStack! Congrats!
 

@@ -1,13 +1,13 @@
 # Openstack cIAP OCTANE
 
-## What's OCTANE ?
+## What's OCTANE ??
 
 **OCTANE** is:
 
 * A cIAP (**C**loud **I**nternet **A**ccess **P**oint). Mainly, it is a **security product** between Internet and your public application hosted in your private zone
 * The acronym (with imagination and goodwill) of **Opensource cIAP Nextgen**
-* A [Societe Generale](https://www.societegenerale.com) Open Source project developped within **Public Cloud 
-* Feature Team (Cloud Center Of Excellence)** by:
+* A [Societe Generale](https://www.societegenerale.com) Open Source project developped within **Public Cloud**
+* Feature Team (Cloud Center Of Excellence) by:
     * [Aubin LAGORCE](https://github.com/AubSs) for Openstack
     * [Eric BOUTEVILLE](https://github.com/qrn77) for [AWS](https://github.com/societe-generale/OCTANE)
 * Is currently available for [AWS](https://github.com/societe-generale/OCTANE) & Openstack
@@ -25,7 +25,7 @@
 
 ## How OCTANE is designed ?
 
-[![ARCHITECTURE](docs/archi.png)]()
+[![ARCHITECTURE](docs/architecture.png)]()
 
 There are several layers (from the most exposed -Internet- to the less exposed -Internal-) :
 

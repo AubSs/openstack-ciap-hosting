@@ -1,6 +1,6 @@
 # Documentation
 
-> [Homepage](../README.md "Homepage")
+> Return to [Homepage](../README.md "Homepage")
 
 #### Summary
 

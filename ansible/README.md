@@ -1,6 +1,14 @@
 # Ansible Playbook
 
-> Return to [Home page](../README.md "Home page")
+> Return to [Homepage](../README.md "Homepage")
+
+#### Summary
+
+* [Presentation](#presentation)
+* [Roles](#roles)
+* [Usage](#usage)
+* [Ansible Dynamic Inventory](#ansible-dynamic-inventory)
+* [Ansible configuration](#ansible-configuration)
 
 ## Presentation
 
