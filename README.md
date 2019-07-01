@@ -83,4 +83,4 @@ This project has been created in 2019 by [Aubin LAGORCE](https://github.com/AubS
 
 ## Sponsorship, Softwares & Used Components
 
-[![HLD](docs/soft.png)]()
+[![HLD](docs/softwares.png)]()
