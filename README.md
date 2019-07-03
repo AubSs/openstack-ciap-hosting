@@ -1,6 +1,6 @@
 # Openstack cIAP OCTANE
 
-## What's OCTANE ??
+## What's OCTANE ?
 
 **OCTANE** is:
 
@@ -83,4 +83,4 @@ This project has been created in 2019 by [Aubin LAGORCE](https://github.com/AubS
 
 ## Sponsorship, Softwares & Used Components
 
-[![HLD](docs/softwares.png)]()
+[![Sponsorship, Softwares & Used Components](docs/softwares.png)]()
