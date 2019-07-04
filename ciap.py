@@ -10,8 +10,8 @@ from openstack.orchestration.util import template_utils
 
 
 class CIAP(object):
-    def __init__(self, name: str, conf: dict):
-        self.name = name
+    def __init__(self, conf: dict):
+        self.name = conf["CIAP"]["stack_name"]
         self.conf = conf
         self.openstack = openstack.connection.Connection(**conf['Openstack'])
 
@@ -32,7 +32,7 @@ class CIAP(object):
         return rc
 
     def New(self):
-        print(f'Create {self.name} stack')
+        print(f'Create { self.name } stack')
         container = self._create_container(self.name, "ansible")
         self.conf['Orchestration']['container_name'] = container['container']
         self.conf['Orchestration']['ansible_tarball'] = container['name']
@@ -47,7 +47,8 @@ class CIAP(object):
             name=self.name,
             template=template,
             files=files,
-            parameters=dict(self.conf['Orchestration'])
+            parameters=dict(self.conf['Orchestration']),
+            tags=('CIAP')
         )
 
     def Delete(self):
@@ -56,7 +57,20 @@ class CIAP(object):
         self.openstack.orchestration.delete_stack(self.name)
 
     def List(self):
-        print("list ciap")
+        generator = self.openstack.orchestration.stacks()
+        for item in generator:
+            stack = self.openstack.orchestration.get_stack(item)
+            if not stack['tags'] or 'CIAP' not in stack['tags']:
+                continue
+            print('===========================================')
+            print(f'Name: { stack.name }')
+            print(f'Stack: { stack.description }')
+            print(f'ID: { stack.id }')
+            print(f'Created at: { stack.created_at }')
+            print(f'Status: { stack.status }')
+            print(f'SSH user: { stack.parameters["ssh_username"] }')
+            for output in stack.outputs:
+                print(f'{ output["description"] }: { output["output_value"] }')
 
     def _create_container(self, name: str, *files):
         # Compress all files
@@ -86,19 +100,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-c", help="Specifie config file (default ./ciap.ini)", default="ciap.ini")
     group = parser.add_mutually_exclusive_group()
-    group.add_argument("--new",    metavar='<user>', help="Create a new CIAP")
-    group.add_argument("--delete", metavar='<user>', help="Delete a CIAP")
-    group.add_argument("--list",   help="List all CIAP", action="store_true")
+    group.add_argument("--new",    help="Create a new CIAP", action="store_true")
+    group.add_argument("--delete", help="Delete a CIAP",     action="store_true")
+    group.add_argument("--list",   help="List all CIAP",     action="store_true")
     args = parser.parse_args()
 
     config = configparser.ConfigParser()
     config.read(args.c)
 
-    stack_name = args.new or args.delete or ""
-    ciap = CIAP(
-        name=stack_name,
-        conf=config
-    )
+    ciap = CIAP(conf=config)
     if args.new:
         ciap.New()
     elif args.delete:
