@@ -11,7 +11,7 @@ from openstack.orchestration.util import template_utils
 
 class CIAP(object):
     def __init__(self, conf: dict):
-        self.name = conf["CIAP"]["stack_name"]
+        self.name = f'ciap-{ conf["CIAP"]["stack_name"] }'
         self.conf = conf
         self.openstack = openstack.connection.Connection(**conf['Openstack'])
 
@@ -32,16 +32,11 @@ class CIAP(object):
         return rc
 
     def New(self):
-        print(f'Create { self.name } stack')
+        print(f'Create `{ self.name }` stack')
         container = self._create_container(self.name, "ansible")
         self.conf['Orchestration']['container_name'] = container['container']
         self.conf['Orchestration']['ansible_tarball'] = container['name']
-
-        with open(self.conf['CIAP']['public_key_file'], 'r') as file:
-            self.conf['Orchestration']['ssh_public_key'] = file.read()
-
         files, template = template_utils.get_template_contents(self.conf['CIAP']['stack_template'])
-
         self.conf['Orchestration']['openstack_rc'] = self.get_openstack_rc()
         self.openstack.orchestration.create_stack(
             name=self.name,
@@ -52,7 +47,7 @@ class CIAP(object):
         )
 
     def Delete(self):
-        print(f'Delete {self.name} stack')
+        print(f'Delete `{ self.name }` stack')
         self._delete_container(self.name)
         self.openstack.orchestration.delete_stack(self.name)
 
@@ -76,7 +71,7 @@ class CIAP(object):
         # Compress all files
         compress_algo = 'bz2'
         buffer = io.BytesIO()
-        tar = tarfile.open(mode=f'w:{compress_algo}', fileobj=buffer)
+        tar = tarfile.open(mode=f'w:{ compress_algo }', fileobj=buffer)
         for file in files:
             tar.add(file)
         tar.close()

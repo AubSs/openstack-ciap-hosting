@@ -78,25 +78,12 @@ resources:
     properties:
       rules:
         ##### Ingress #####
-        - remote_ip_prefix:
-            str_replace:
-              template: ip/32
-              params:
-                ip: { get_attr: [ lb, vip_address ] }
+        - remote_ip_prefix: 0.0.0.0/0 # HTTPS
           direction: ingress
           protocol: tcp
           port_range_min: 443
           port_range_max: 443
-        - remote_ip_prefix:
-            str_replace:
-              template: ip/32
-              params:
-                ip: { get_attr: [ lb, vip_address ] }
-          direction: ingress
-          protocol: tcp
-          port_range_min: 65000
-          port_range_max: 65000
-        - remote_ip_prefix:
+        - remote_ip_prefix: # SSH
             str_replace:
               template: ip/32
               params:
@@ -105,23 +92,18 @@ resources:
           protocol: tcp
           port_range_min: 22
           port_range_max: 22
-        - remote_ip_prefix:
+        - remote_ip_prefix: # Ping
             str_replace:
               template: ip/32
               params:
                 ip: { get_param: admin_ip }
           direction: ingress
           protocol: icmp
-        - remote_ip_prefix: 0.0.0.0/0  # TO BE DELETE
+        - remote_ip_prefix: 0.0.0.0/0 # Health Monitor
           direction: ingress
           protocol: tcp
-          port_range_min: 1
-          port_range_max: 65400
-        - remote_ip_prefix: 0.0.0.0/0 # TO BE DELETE
-          direction: ingress
-          protocol: udp
-          port_range_min: 1
-          port_range_max: 65400
+          port_range_min: 65000
+          port_range_max: 65000
         ##### Egress #####
         - remote_ip_prefix: 0.0.0.0/0
           direction: egress
@@ -133,32 +115,27 @@ resources:
           protocol: tcp
           port_range_min: 443
           port_range_max: 443
-        - remote_ip_prefix: 0.0.0.0/0 # Metrology influxdb
-          direction: egress
-          protocol: tcp
-          port_range_min: 8086
-          port_range_max: 8086
-        - remote_ip_prefix: 0.0.0.0/0 # Metrology influxdb (socket)
-          direction: egress
-          protocol: tcp
-          port_range_min: 8094
-          port_range_max: 8094
-        - remote_ip_prefix: 0.0.0.0/0 # Metrology grafana
+        - remote_ip_prefix: 0.0.0.0/0 # Grafana
           direction: egress
           protocol: tcp
           port_range_min: 3000
           port_range_max: 3000
-        - remote_ip_prefix: 0.0.0.0/0 # Metrology logstash
+        - remote_ip_prefix: 0.0.0.0/0 # Metrology telegraf
           direction: egress
           protocol: tcp
-          port_range_min: 5044
-          port_range_max: 5044
-        - remote_ip_prefix: 0.0.0.0/0
+          port_range_min: 8086
+          port_range_max: 8086
+        - remote_ip_prefix: 0.0.0.0/0 # Metrology beats
+          direction: egress
+          protocol: tcp
+          port_range_min: 8094
+          port_range_max: 8094
+        - remote_ip_prefix: 0.0.0.0/0 # DNS
           direction: egress
           protocol: tcp
           port_range_min: 53
           port_range_max: 53
-        - remote_ip_prefix: 0.0.0.0/0
+        - remote_ip_prefix: 0.0.0.0/0 # DNS
           direction: egress
           protocol: udp
           port_range_min: 53
@@ -250,9 +227,9 @@ resources:
     properties:
       pool: { get_resource: pool }
       type: HTTP
-      delay: 1 # Init 5
-      max_retries: 1 # Init 5
-      timeout: 1 # Init 5
+      delay: 5
+      max_retries: 5
+      timeout: 5
 
 #>===========================================================================<#
 #>=======                           Outputs                           =======<#

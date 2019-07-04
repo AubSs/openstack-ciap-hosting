@@ -22,6 +22,12 @@
     remote_src: yes
     force: no
 
+- name: Set wp-content permission
+  file:
+    dest: "{{ wordpress_path }}/wordpress/wp-content"
+    mode: 0777
+    recurse: yes
+
 - name: Update WordPress config file
   lineinfile:
     dest="{{ wordpress_path }}/wordpress/wp-config.php"

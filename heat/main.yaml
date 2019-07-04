@@ -23,7 +23,7 @@ parameters:
 
   deploy_plug:
     type: boolean
-    default: yes
+    default: false
     description: Deploy a plug server
 
   cidr:
@@ -81,7 +81,7 @@ resources:
       name:
         list_join:
           - '-'
-          - ['ciap', { get_param: 'OS::stack_name' }, { str_split: ['-', { get_param: 'OS::stack_id' }, 0] }]
+          - [{ get_param: 'OS::stack_name' }, { str_split: ['-', { get_param: 'OS::stack_id' }, 0] }]
       save_private_key: True
 
 #>================================= ROUTER ==================================<#
@@ -124,7 +124,7 @@ resources:
       name:
         list_join:
           - '-'
-          - ['ciap', { get_param: 'OS::stack_name' }, 'up_lb']
+          - [{ get_param: 'OS::stack_name' }, 'up_lb']
       image: { get_param: server_image }
       flavor: { get_param: server_flavor }
       ssh_user: { get_param: ssh_username }
@@ -182,7 +182,7 @@ resources:
       name:
         list_join:
           - '-'
-          - ['ciap', { get_param: 'OS::stack_name' }, 'mid_waf']
+          - [{ get_param: 'OS::stack_name' }, 'mid_waf']
       image: { get_param: server_image }
       flavor: { get_param: server_flavor }
       ssh_user: { get_param: ssh_username }
@@ -207,7 +207,7 @@ resources:
       name:
         list_join:
           - '-'
-          - ['ciap', { get_param: 'OS::stack_name' }, 'mid_vpn']
+          - [{ get_param: 'OS::stack_name' }, 'mid_vpn']
       image: { get_param: server_image }
       flavor: { get_param: server_flavor }
       ssh_user: { get_param: ssh_username }
@@ -275,7 +275,7 @@ resources:
       name:
         list_join:
           - '-'
-          - ['ciap', { get_param: 'OS::stack_name' }, 'low_fw']
+          - [{ get_param: 'OS::stack_name' }, 'low_fw']
       image: { get_param: server_image }
       flavor: { get_param: server_flavor }
       ssh_user: { get_param: ssh_username }

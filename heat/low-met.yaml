@@ -48,7 +48,7 @@ resources:
       name:
         list_join:
           - '-'
-          - ['ciap', { get_param: ciap_name }, 'low_met']
+          - [{ get_param: ciap_name }, 'low_met']
       image: { get_param: image }
       flavor: { get_param: flavor }
       metadata: {
@@ -84,7 +84,7 @@ resources:
       network_id: { get_param: network }
       fixed_ips:
         - subnet_id: { get_param: subnet }
-      #security_groups:
+      #security_groups: TODO
         #- { get_resource: security_group }
 
   security_group:

@@ -1,7 +1,7 @@
 ---
 
 granted_domains:
-  - backend_ip_or_fqdn: 10.1.0.141
+  - backend_ip_or_fqdn: 10.1.0.157
     backend_port: 443
     backend_protocol: https # can be https
     domain: wordpress.ciap.lagorce.io

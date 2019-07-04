@@ -78,6 +78,7 @@
       component = "elb"
 
 {%- endif %}
+
 [[inputs.nginx]]
  urls = [
  "https://127.0.0.1:{{ item.https_listening_port }}/nginx_status", 

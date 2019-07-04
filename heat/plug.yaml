@@ -73,7 +73,7 @@ resources:
       name:
         list_join:
           - '-'
-          - ['ciap', { get_param: ciap_name }, 'plug']
+          - [{ get_param: ciap_name }, 'plug']
       image: { get_param: server_image }
       flavor: { get_param: server_flavor }
       networks:
@@ -109,17 +109,23 @@ resources:
       network_id: { get_resource: network }
       fixed_ips:
         - subnet_id: { get_resource: subnet }
-      #security_groups:
-        #- { get_resource: security_group }
+      security_groups:
+        - { get_resource: security_group }
 
   security_group:
     type: OS::Neutron::SecurityGroup
     properties:
       rules:
          # Ingress:
-         - { remote_ip_prefix: 0.0.0.0/0, direction: ingress, protocol: tcp, port_range_min: 80,  port_range_max: 80  }
-         - { remote_ip_prefix: 0.0.0.0/0, direction: ingress, protocol: tcp, port_range_min: 443, port_range_max: 443 }
-         - { remote_ip_prefix: 0.0.0.0/0, direction: ingress, protocol: icmp }
+         - { remote_ip_prefix: 0.0.0.0/0, direction: ingress, protocol: icmp } # Ping
+         - { remote_ip_prefix: 0.0.0.0/0, direction: ingress, protocol: tcp, port_range_min: 22, port_range_max: 22 } # SSH
+         - { remote_ip_prefix: 0.0.0.0/0, direction: ingress, protocol: tcp, port_range_min: 80,  port_range_max: 80 } # HTTP
+         - { remote_ip_prefix: 0.0.0.0/0, direction: ingress, protocol: tcp, port_range_min: 443, port_range_max: 443 } # HTTPS
+         # Egress:
+         - { remote_ip_prefix: 0.0.0.0/0, direction: egress, protocol: tcp, port_range_min: 53,  port_range_max: 53 }  # DNS
+         - { remote_ip_prefix: 0.0.0.0/0, direction: egress, protocol: udp, port_range_min: 53,  port_range_max: 53 }  # DNS
+         - { remote_ip_prefix: 0.0.0.0/0, direction: egress, protocol: tcp, port_range_min: 80,  port_range_max: 80  } # HTTP
+         - { remote_ip_prefix: 0.0.0.0/0, direction: egress, protocol: tcp, port_range_min: 443, port_range_max: 443 } # HTTPS
 
 #>===========================================================================<#
 #>=======                           Outputs                           =======<#
