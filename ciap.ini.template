@@ -20,6 +20,6 @@ server_image    = <uuid>    # [Required] Image used by the servers
 public_net      = <string>  # [Required] Public Network name used by the ciap
 server_flavor   = <string>  # [Required] Flavor used by the servers
 deploy_plug     = <bool>    # [Optional] (Default to false) Deploy a demo plug
-cidr            = <cidr/22> # [Required] CIDR used by the ciap
+cidr            = <cidr/24> # [Required] CIDR used by the ciap
 ssh_username    = <string>  # [Optional] (Default to `ciap`) SSH User to connect to the servers
 ssh_public_key  = <string>  # [Optional] SSH public key to install in all servers

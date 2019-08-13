@@ -50,7 +50,6 @@ For further details, a more complete READme is available in each directory.
 * [Build & Run](docs/README.md "Build & Run")
 * [Architecture](docs/architecture.md "Architecture")
 * [Bring up a complete OpenStack environment](openstack/README.md "Bring up a complete OpenStack environment")
-* [Openstack Orchestration](heat/README.md "Openstack Orchestration")
 * [Ansible](ansible/README.md "Ansible")
     * [Ansible variables](ansible/vars/README.md "Ansible variables")
     * [Ansible roles](ansible/roles/README.md "Ansible roles")
