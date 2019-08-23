@@ -1,0 +1,25 @@
+server {
+    listen 443 ssl;
+    server_name {{ item.domain }}{% if item.alias is defined %}{% for _alias in item.alias %} {{ _alias }}{% endfor %}{% endif %};
+
+    access_log "{{ v_log_path }}/nginx/{{ item.domain }}/{{ item.domain }}_https_access.log" main;
+
+    location /nginx_status {
+        stub_status on;
+        access_log off;
+        allow 127.0.0.1;
+        deny all;
+    }
+
+    location / {
+        proxy_set_header Host $host;
+        proxy_pass {{ item.backend_protocol }}://{{ item.backend_ip_or_fqdn }}:{{ item.backend_port }}/;
+    }
+
+    ssl_certificate "{{ v_certificates_path }}/{{ item.domain }}.crt";
+    ssl_certificate_key "{{ v_certificates_path }}/{{ item.domain }}.key";
+    ssl_session_cache shared:SSL:1m;
+    ssl_session_timeout 10m;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+}

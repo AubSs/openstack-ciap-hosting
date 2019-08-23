@@ -1,0 +1,10 @@
+---
+
+- name: Delete configuration SURICATA directories for each revoked domain (if needed)
+  file:
+    path: "{{ v_suricata_root_directory }}/{{ item.domain }}"
+    state: absent
+  when: item.domain is defined
+  with_items: "{{ revoked_domains }}"
+  notify: 
+    - Stop SURICATA daemon

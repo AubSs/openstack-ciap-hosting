@@ -1,0 +1,211 @@
+heat_template_version: '2018-08-31'
+
+description: CIAP Admin
+
+#>===========================================================================<#
+#>=======                         Parameters                          =======<#
+#>===========================================================================<#
+parameters:
+  public_net:
+    type: string
+
+  server_image:
+    type: string
+    description: Id of Glance image
+
+  server_flavor:
+    type: string
+    default: m1.small
+    description: Flavor desired
+
+  cidr:
+    type: string
+    default: 10.1.0.0/24
+    description: CIDR
+
+  ssh_username:
+    type: string
+    default: ciap
+    description: User name ssh
+
+  ssh_authorized_key:
+    type: string
+    description: Admin authorized keys
+
+  ssh_private_key:
+    type: string
+    description: Admin private keys
+
+  openstack_rc:
+    type: string
+
+  container_name:
+    type: string
+
+  ansible_tarball:
+    type: string
+
+  ciap_router:
+    type: string
+    description: CIAP Main router
+
+  ciap_name:
+    type: string
+    description: CIAP Name
+
+#>===========================================================================<#
+#>=======                          Resources                          =======<#
+#>===========================================================================<#
+resources:
+  network:
+    type: OS::Neutron::Net
+    properties:
+      name: CIAP Admin Network
+
+  subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      name: CIAP Admin Subnet
+      network_id: { get_resource: network }
+      cidr:
+        str_replace:
+          template: cidr_0.cidr_8.cidr_16.96/27
+          params:
+            cidr_0:  { str_split: ['.', { get_param: cidr }, 0] }
+            cidr_8:  { str_split: ['.', { get_param: cidr }, 1] }
+            cidr_16: { str_split: ['.', { get_param: cidr }, 2] }
+      dns_nameservers: [ "1.1.1.1", "1.0.0.1" ]
+
+  router_interface:
+    type: OS::Neutron::RouterInterface
+    properties:
+      router_id: { get_param: ciap_router }
+      subnet_id: { get_resource: subnet }
+
+  server_boot_config:
+    type: OS::Heat::CloudConfig
+    properties:
+      cloud_config:
+        users:
+          - name: { get_param: ssh_username }
+            sudo: ALL=(ALL) NOPASSWD:ALL # TODO DELETE
+            groups: sudo # TODO DELETE
+            ssh_authorized_keys:
+              - { get_param: ssh_authorized_key }
+            shell: /bin/bash
+        disable_root: true
+        # Update/Upgrade & Reboot if necessary
+        package_update: true
+        package_upgrade: true
+
+  server_boot_script:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config:
+        str_replace:
+          template: |
+            #!/bin/bash
+            cd /home/$USERNAME
+            # Install private key
+            echo -n "$PRIVATE_KEY" > .ssh/id_rsa
+            chmod 600 .ssh/id_rsa
+            chown $USERNAME:$USERNAME .ssh/id_rsa
+
+            # Secure SSH
+            sed -i 's/#PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config
+
+            yum install -y epel-release
+            yum install -y vim-enhanced emacs-nox nano
+            yum install -y htop wget tee ansible tree
+            yum install -y gcc openssl-devel bzip2
+            yum install -y python36 python36-pip python36-wheel python36-devel python36-virtualenv
+
+            pip3 install python-openstackclient
+
+            # Setup Openstack RC
+            echo '$OPENSTACK_RC' > .openstackrc
+            echo '# Source Openstack RC
+            if [ -f ~/.openstackrc ]; then
+                . ~/.openstackrc
+            fi' >> .bashrc
+            source .openstackrc
+
+            # Download ansible playbook
+            openstack object save $CONTAINER $ANSIBLE_TARBALL
+            tar -jxvf $ANSIBLE_TARBALL
+            rm $ANSIBLE_TARBALL
+            chown -R $USERNAME:$USERNAME $ANSIBLE_FOLDER
+            cd $ANSIBLE_FOLDER
+
+            # Setup ansible cron (every 5 min)
+            ANSIBLE_LOG_PATH=/var/log/ciap
+            mkdir $ANSIBLE_LOG_PATH
+            chown -R $USERNAME $ANSIBLE_LOG_PATH
+            { crontab -l -u $USERNAME 2>/dev/null; echo '*/5 * * * * . /home/$USERNAME/.openstackrc; sh /home/$USERNAME/$ANSIBLE_FOLDER/ciap.cron'; } | crontab -u $USERNAME -
+
+          params:
+            $USERNAME: { get_param: ssh_username }
+            $PRIVATE_KEY: { get_param: ssh_private_key }
+            $OPENSTACK_RC: { get_param: openstack_rc }
+            $CONTAINER: { get_param: container_name }
+            $ANSIBLE_TARBALL: { get_param: ansible_tarball }
+            $ANSIBLE_FOLDER: "ansible"
+
+  server_boot:
+    type: OS::Heat::MultipartMime
+    properties:
+      parts:
+      - config: { get_resource: server_boot_config }
+      - config: { get_resource: server_boot_script }
+
+  server:
+    type: OS::Nova::Server
+    properties:
+      name:
+        list_join:
+          - '-'
+          - [{ get_param: ciap_name }, 'admin']
+      image: { get_param: server_image }
+      flavor: { get_param: server_flavor }
+      networks:
+        - port: { get_resource: port }
+      user_data_format: SOFTWARE_CONFIG
+      user_data: { get_resource: server_boot }
+
+  port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: network }
+      fixed_ips:
+        - subnet_id: { get_resource: subnet }
+      security_groups:
+        - { get_resource: security_group }
+
+  floating_ip:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network: { get_param: public_net }
+      port_id: { get_resource: port }
+
+  security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      rules:
+         # Ingress:
+         - { remote_ip_prefix: 0.0.0.0/0, direction: ingress, protocol: tcp, port_range_min: 22, port_range_max: 22 } # SSH
+         - { remote_ip_prefix: 0.0.0.0/0, direction: ingress, protocol: icmp } # Ping
+         # Egress:
+         - { remote_ip_prefix: 0.0.0.0/0, direction: egress, protocol: icmp } # Ping
+         - { remote_ip_prefix: 0.0.0.0/0, direction: egress, protocol: tcp, port_range_min: 1, port_range_max: 65535 }
+         - { remote_ip_prefix: 0.0.0.0/0, direction: egress, protocol: udp, port_range_min: 1, port_range_max: 65535 }
+
+#>===========================================================================<#
+#>=======                           Outputs                           =======<#
+#>===========================================================================<#
+outputs:
+  public_ip:
+    description: Floating IP address of admin server
+    value: { get_attr: [ floating_ip, floating_ip_address ] }
+  private_ip:
+    description: Private IP address of admin server
+    value: { get_attr: [ server, first_address ]}

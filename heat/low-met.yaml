@@ -1,0 +1,104 @@
+heat_template_version: '2018-08-31'
+
+description: CIAP Metrology Server
+
+#>===========================================================================<#
+#>=======                         Parameters                          =======<#
+#>===========================================================================<#
+parameters:
+  image:
+    type: string
+    description: Image used by the server
+
+  flavor:
+    type: string
+    description: Flavor desired
+
+  ssh_user:
+    type: string
+    description: SSH User to connect to the server
+
+  ssh_authorized_key:
+    type: string
+    description: SSH key to connect to the server
+
+  metadata:
+    default: {}
+    type: json
+
+  network:
+    type: string
+    description: Network used by the server
+
+  subnet:
+    type: string
+    description: Subnet used by the server
+
+  ciap_name:
+    type: string
+    description: CIAP Name
+
+#>===========================================================================<#
+#>=======                          Resources                          =======<#
+#>===========================================================================<#
+resources:
+  server:
+    type: OS::Nova::Server
+    properties:
+      name:
+        list_join:
+          - '-'
+          - [{ get_param: ciap_name }, 'low_met']
+      image: { get_param: image }
+      flavor: { get_param: flavor }
+      metadata: {
+        map_merge: [
+          { 'ssh_user': { get_param: ssh_user } },
+          { 'ciap': { get_param: ciap_name } },
+          { 'instance': 'low_met' },
+          { get_param: metadata }
+        ]
+      }
+      networks:
+        - port: { get_resource: port }
+      user_data_format: RAW
+      user_data:
+        str_replace:
+          template: |
+            #cloud-config
+            users:
+              - name: $NAME
+                sudo: ALL=(ALL) NOPASSWD:ALL
+                groups: sudo
+                ssh_authorized_keys:
+                  - $PUBLIC_KEY
+                shell: /bin/bash
+            disable_root: true
+          params:
+            $NAME: { get_param: ssh_user }
+            $PUBLIC_KEY: { get_param: ssh_authorized_key }
+
+  port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_param: network }
+      fixed_ips:
+        - subnet_id: { get_param: subnet }
+      #security_groups: TODO
+        #- { get_resource: security_group }
+
+  security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      rules:
+         # Ingress:
+         - { remote_ip_prefix: 0.0.0.0/0, direction: ingress, protocol: tcp, port_range_min: 80,  port_range_max: 80  }
+         - { remote_ip_prefix: 0.0.0.0/0, direction: ingress, protocol: tcp, port_range_min: 443, port_range_max: 443 }
+         - { remote_ip_prefix: 0.0.0.0/0, direction: ingress, protocol: icmp }
+
+#>===========================================================================<#
+#>=======                           Outputs                           =======<#
+#>===========================================================================<#
+outputs:
+  ip:
+    value: { get_attr: [port, fixed_ips, 0, ip_address]}

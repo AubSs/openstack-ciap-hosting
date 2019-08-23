@@ -1,0 +1,20 @@
+---
+
+- name: Add domains
+  include_vars: "domains.yml"
+  tags: [always]
+
+- import_tasks: init/softwares.yml
+  tags:
+   - init
+   - common
+
+- import_tasks: init/selinux.yml
+  tags:
+   - init
+   - common
+
+- import_tasks: init/ssl.yml
+  tags:
+   - init
+   - common

@@ -1,0 +1,39 @@
+---
+
+- name: Set Wordpress path variable
+  set_fact:
+    wordpress_path: "/var/www"
+  
+- name: Extract WordPress 5.2.1
+  unarchive:
+    src: wordpress_5-2-1.tar.gz
+    dest: "{{ wordpress_path }}"
+    owner: root
+    group: root
+    mode: 0775
+
+- name: Copy wordpress sample config file
+  copy:
+    src: "{{ wordpress_path }}/wordpress/wp-config-sample.php"
+    dest: "{{ wordpress_path }}/wordpress/wp-config.php"
+    owner: root
+    group: root
+    mode: 0775
+    remote_src: yes
+    force: no
+
+- name: Set wp-content permission
+  file:
+    dest: "{{ wordpress_path }}/wordpress/wp-content"
+    mode: 0777
+    recurse: yes
+
+- name: Update WordPress config file
+  lineinfile:
+    dest="{{ wordpress_path }}/wordpress/wp-config.php"
+    regexp="{{ item.regexp }}"
+    line="{{ item.line }}"
+  with_items:
+    - {'regexp': "define\\( 'DB_NAME', '(.)+' \\);", 'line': "define( 'DB_NAME', '{{ wp_db_name }}' );"}        
+    - {'regexp': "define\\( 'DB_USER', '(.)+' \\);", 'line': "define( 'DB_USER', '{{ wp_db_user }}' );"}        
+    - {'regexp': "define\\( 'DB_PASSWORD', '(.)+' \\);", 'line': "define( 'DB_PASSWORD', '{{ wp_db_password }}' );"}

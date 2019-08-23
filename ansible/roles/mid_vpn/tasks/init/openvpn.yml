@@ -1,0 +1,165 @@
+---
+
+- name: Create openvpn key directory
+  file:
+    path: "{{ openvpn_key_dir }}"
+    state: directory
+
+- name: Create openvpn ccd directory
+  file:
+    path: "{{ openvpn_ccd_dir }}"
+    state: directory
+
+- name: Create openvpn ovpn directory
+  file:
+    path: "{{ openvpn_ovpn_dir }}"
+    state: directory
+
+- name: Create openvpn clients archive configuration directory
+  file:
+    path: "{{ openvpn_clients_dir }}"
+    state: directory
+
+- name: Copy openssl server/ca extensions
+  copy:
+    src: "{{ item }}"
+    dest: "{{ openvpn_key_dir }}"
+    owner: root
+    group: root
+    backup: yes
+    force: yes
+    mode: 0400
+  with_items:
+    - openssl-server.ext
+    - openssl-ca.ext
+  notify:
+    - Restart openvpn
+
+- name: Generate CA key
+  command: openssl req -nodes -newkey rsa:{{ openvpn_rsa_bits }} -keyout {{ openvpn_ca_key_name }}  -out {{ openvpn_ca_csr_name }} -days {{ openvpn_ca_validity_days }} -subj /CN={{ openvpn_ca_name }}/
+  args:
+    chdir: "{{ openvpn_key_dir }}"
+    creates: "{{ openvpn_ca_key_name }}"
+  notify:
+    - Restart openvpn
+
+- name: Protect CA key
+  file:
+    path: "{{ openvpn_key_dir }}/{{ openvpn_ca_key_name }}"
+    mode: 0400
+
+- name: Sign CA key
+  command: openssl x509 -req -in {{ openvpn_ca_csr_name }} -out {{ openvpn_ca_crt_name }} -CAcreateserial -signkey {{ openvpn_ca_key_name }} -sha256 -days {{ openvpn_ca_validity_days }} -extfile openssl-ca.ext
+  args:
+    chdir: "{{ openvpn_key_dir }}"
+    creates: "{{ openvpn_ca_crt_name }}"
+  notify:
+    - Restart openvpn
+
+- name: Generate server key
+  command: openssl req -nodes -newkey rsa:{{openvpn_rsa_bits}} -keyout server.key -out server.csr -days {{ openvpn_ca_validity_days }} -subj /CN={{ openvpn_server_name }}/
+  args:
+    chdir: "{{ openvpn_key_dir }}"
+    creates: server.key
+  notify:
+    - Restart openvpn
+
+- name: Protect server key
+  file:
+    path: "{{ openvpn_key_dir }}/server.key"
+    mode: 0400
+
+- name: Sign server key
+  command: openssl x509 -req -in server.csr -out server.crt -CA {{ openvpn_ca_crt_name }} -CAkey {{ openvpn_ca_key_name }} -sha256 -days {{ openvpn_ca_validity_days }} -CAcreateserial -extfile openssl-server.ext
+  args:
+    chdir: "{{ openvpn_key_dir }}"
+    creates: server.crt
+  notify:
+    - Restart openvpn
+
+- name: Generate tls-auth key
+  command: openvpn --genkey --secret {{ openvpn_ta_key_name }}
+  args:
+    chdir: "{{ openvpn_key_dir }}"
+    creates: "{{ openvpn_ta_key_name }}"
+  notify:
+    - Restart openvpn
+
+- name: Generate dh params
+  command: openssl dhparam -out {{ openvpn_key_dir }}/dh.pem {{ openvpn_rsa_bits }}
+  args:
+    chdir: "{{ openvpn_key_dir }}"
+    creates: dh.pem
+  notify:
+    - Restart openvpn
+
+- name: Install ca.conf config file
+  template:
+    src: ca.conf.j2
+    dest: "{{ openvpn_key_dir }}/ca.conf"
+    owner: root
+    group: root
+    mode: 744
+    backup: yes
+    force: yes
+  notify:
+    - Restart openvpn
+
+- name: Create initial certificate revocation list squence number
+  shell: "echo 00 > crl_number"
+  args:
+    chdir: "{{ openvpn_key_dir }}"
+    creates: crl_number
+
+- name: Install revocation script
+  template:
+    src: revoke.sh.j2
+    dest: "{{ openvpn_key_dir }}/revoke.sh"
+    owner: root
+    group: root
+    mode: 744
+    backup: yes
+    force: yes
+
+- name: Ensure certificate revocation list database exists
+  file:
+    path: "{{ openvpn_key_dir }}/index.txt"
+    state: touch
+
+- name: Set up certificate revocation list
+  command: sh revoke.sh
+  args:
+    chdir: "{{ openvpn_key_dir }}"
+    creates: "{{ openvpn_key_dir }}/{{ openvpn_crl_name }}"
+
+- name: Set openvpn service name - systemd
+  set_fact:
+    openvpn_service_name: "openvpn@{{ openvpn_config_file }}.service"
+
+- name: Create openvpn config file
+  template:
+    src: server.conf.j2
+    dest: "{{ openvpn_base_dir }}/{{ openvpn_config_file }}.conf"
+    owner: root
+    group: root
+    backup: yes
+    force: yes
+  notify:
+    - Restart openvpn
+
+- name: Copy openvpn logrotate config file
+  copy:
+    src: openvpn_logrotate.conf
+    dest: /etc/logrotate.d/openvpn.conf
+    owner: root
+    group: root
+    mode: 0400
+    backup: yes
+    force: yes
+
+- name: Setup openvpn auto-start & start
+  service:
+    name: "{{ openvpn_service_name }}"
+    enabled: yes
+    state: started
+

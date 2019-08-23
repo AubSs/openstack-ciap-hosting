@@ -1,0 +1,45 @@
+---
+# tasks file for openvpn
+- name: Include clients & streams
+  include_vars: "{{ item }}"
+  with_first_found:
+    - files:
+        - "vpn.yml" 
+      errors: ignore
+  tags:
+    - init
+    - grantvpnclient
+    - revokevpnclient
+    - mid_vpn
+
+- import_tasks: init/softwares.yml
+  tags:
+    - init
+    - mid_vpn
+
+- import_tasks: init/openvpn.yml
+  tags:
+    - init
+    - mid_vpn
+
+- import_tasks: init/iptables.yml
+  tags:
+    - init
+    - mid_vpn
+
+- import_tasks: grant/iptables.yml
+  tags:
+    - grantvpnclient
+    - revokevpnclient
+    - mid_vpn
+
+- import_tasks: grant/clients.yml
+  tags:
+    - grantvpnclient
+    - mid_vpn
+
+- import_tasks: revoke/clients.yml
+  tags:
+    - revokevpnclient
+    - mid_vpn
+

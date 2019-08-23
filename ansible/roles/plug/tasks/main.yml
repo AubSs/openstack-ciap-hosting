@@ -1,0 +1,22 @@
+---
+
+- name: Get plug configuration
+  include_vars: "plug.yml"
+  tags:
+    - init
+    - plug
+
+- import_tasks: mariadb.yml
+  tags:
+    - init
+    - plug
+
+- import_tasks: webserver.yml
+  tags:
+    - init
+    - plug
+
+- import_tasks: wordpress.yml
+  tags:
+    - init
+    - plug

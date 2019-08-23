@@ -1,0 +1,17 @@
+---
+
+- name: Reload nginx daemon
+  systemd:
+    name: nginx
+    daemon_reload: yes
+    enabled: yes
+    state: reloaded
+    no_block: yes
+  ignore_errors: true
+
+- name: Restart php-fpm daemon
+  systemd:
+    name: php-fpm
+    enabled: yes
+    state: restarted
+  ignore_errors: true

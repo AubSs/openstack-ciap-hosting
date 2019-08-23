@@ -1,0 +1,122 @@
+filebeat.inputs:
+{% for item in granted_domains %}
+- type: log
+  enabled: true
+  paths:
+    - "{{ v_log_path }}/havp/{{ item.domain }}/{{ item.domain }}_access.log"
+  fields:
+        log_type: havp_access
+        az : "{{ openstack.location.zone }}"
+        ciap : "{{ ciap }}"
+        bl : "{{ bl }}"
+        env : "{{ env }}"
+        fonction : "{{ fonction }}"
+        region : "{{ openstack.location.region_name }}"
+        stage : "{{ stage }}"
+        hostname: "{{ openstack.name }}"
+        domain: "{{ item.domain }}"
+        genre: "av"
+
+- type: log
+  enabled: true
+  paths:
+    - "{{ v_log_path }}/nginx/{{ item.domain }}/{{ item.domain }}_http_access.log"
+  fields:
+        log_type: nginx_access
+        az : "{{ openstack.location.zone }}"
+        ciap : "{{ ciap }}"
+        bl : "{{ bl }}"
+        env : "{{ env }}"
+        fonction : "{{ fonction }}"
+        region : "{{ openstack.location.region_name }}"
+        stage : "{{ stage }}"
+        hostname: "{{ openstack.name }}"
+        domain: "{{ item.domain }}"
+        genre: "http"
+
+- type: log
+  enabled: true
+  paths:
+    - "{{ v_log_path }}/nginx/{{ item.domain }}/{{ item.domain }}_https_access.log"
+  fields:
+        log_type: nginx_access
+        az : "{{ openstack.location.zone }}"
+        ciap : "{{ ciap }}"
+        bl : "{{ bl }}"
+        env : "{{ env }}"
+        fonction : "{{ fonction }}"
+        region : "{{ openstack.location.region_name }}"
+        stage : "{{ stage }}"
+        hostname: "{{ openstack.name }}"
+        domain: "{{ item.domain }}"
+        genre: "https"
+
+- type: log
+  enabled: true
+  paths:
+    - "{{ v_log_path }}/nginx/{{ item.domain }}/{{ item.domain }}_http2_access.log"
+  fields:
+        log_type: nginx_access
+        az : "{{ openstack.location.zone }}"
+        ciap : "{{ ciap }}"
+        bl : "{{ bl }}"
+        env : "{{ env }}"
+        fonction : "{{ fonction }}"
+        region : "{{ openstack.location.region_name }}"
+        stage : "{{ stage }}"
+        hostname: "{{ openstack.name }}"
+        domain: "{{ item.domain }}"
+        genre: "http2"
+
+- type: log
+  enabled: true
+  paths:
+    - "{{ v_log_path }}/suricata/{{ item.domain }}/eve.json"
+  fields:
+        log_type: suricata
+        az : "{{ openstack.location.zone }}"
+        ciap : "{{ ciap }}"
+        bl : "{{ bl }}"
+        env : "{{ env }}"
+        fonction : "{{ fonction }}"
+        region : "{{ openstack.location.region_name }}"
+        stage : "{{ stage }}"
+        hostname: "{{ openstack.name }}"
+        domain: "{{ item.domain }}"
+        genre: "ids"
+
+- type: log
+  enabled: true
+  paths:
+    - "{{ v_log_path }}/suricata/{{ item.domain }}/fast.log"
+  fields:
+        log_type: suricata_fast
+        az : "{{ openstack.location.zone }}"
+        ciap : "{{ ciap }}"
+        bl : "{{ bl }}"
+        env : "{{ env }}"
+        fonction : "{{ fonction }}"
+        region : "{{ openstack.location.region_name }}"
+        stage : "{{ stage }}"
+        hostname: "{{ openstack.name }}"
+        domain: "{{ item.domain }}"
+        genre: "ids"
+
+{% endfor %}
+filebeat.config.modules:
+  path: ${path.config}/modules.d/*.yml
+  reload.enabled: false
+
+setup.template.settings:
+  index.number_of_shards: 3
+
+output.logstash:
+  hosts: ["{{ metrology_ip }}:{{ v_metrology_logstash_port }}"]
+  ssl.enabled: true
+  ssl.certificate: "{{ v_certificates_path }}/filebeat.crt"
+  ssl.key: "{{ v_certificates_path }}/filebeat.key"
+  ssl.verification_mode: none
+
+logging.level: error
+logging.selectors: ["*"]
+logging.metrics.enabled : false

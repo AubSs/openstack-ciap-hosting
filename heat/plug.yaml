@@ -1,0 +1,135 @@
+heat_template_version: '2018-08-31'
+
+description: CIAP Plug
+
+#>===========================================================================<#
+#>=======                         Parameters                          =======<#
+#>===========================================================================<#
+parameters:
+  server_image:
+    type: string
+    description: Id of Glance image
+
+  server_flavor:
+    type: string
+    description: Flavor desired
+
+  cidr:
+    type: string
+    description: CIDR
+
+  metadata:
+    default: {}
+    type: json
+
+  ssh_username:
+    type: string
+    description: User name ssh
+
+  ssh_key:
+    type: string
+    description: ssh key
+
+  ciap_router:
+    type: string
+    description: CIAP Main router
+
+  ciap_name:
+    type: string
+    description: CIAP Name
+
+#>===========================================================================<#
+#>=======                          Resources                          =======<#
+#>===========================================================================<#
+resources:
+  network:
+    type: OS::Neutron::Net
+    properties:
+      name: CIAP Plug Network
+
+  subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      name: CIAP Plug Subnet
+      network_id: { get_resource: network }
+      cidr:
+        str_replace:
+          template: cidr_0.cidr_8.cidr_16.128/27
+          params:
+            cidr_0:  { str_split: ['.', { get_param: cidr }, 0] }
+            cidr_8:  { str_split: ['.', { get_param: cidr }, 1] }
+            cidr_16: { str_split: ['.', { get_param: cidr }, 2] }
+      dns_nameservers: [ "1.1.1.1", "1.0.0.1" ]
+
+  router_interface:
+    type: OS::Neutron::RouterInterface
+    properties:
+      router_id: { get_param: ciap_router }
+      subnet_id: { get_resource: subnet }
+
+  server:
+    type: OS::Nova::Server
+    properties:
+      name:
+        list_join:
+          - '-'
+          - [{ get_param: ciap_name }, 'plug']
+      image: { get_param: server_image }
+      flavor: { get_param: server_flavor }
+      networks:
+        - port: { get_resource: port }
+      user_data:
+        str_replace:
+          template: |
+            #cloud-config
+            users:
+              - name: $NAME
+                sudo: ALL=(ALL) NOPASSWD:ALL # TODO DELETE
+                groups: sudo # TODO DELETE
+                ssh_authorized_keys:
+                  - $PUBLIC_KEY
+                shell: /bin/bash
+            disable_root: true
+          params:
+            $NAME: { get_param: ssh_username }
+            $PUBLIC_KEY: { get_param: ssh_key }
+      user_data_format: RAW
+      metadata: {
+        map_merge: [
+          { 'ssh_user': { get_param: ssh_username } },
+          { 'ciap': { get_param: ciap_name } },
+          { 'instance': 'plug' },
+          { get_param: metadata }
+        ]
+      }
+
+  port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: network }
+      fixed_ips:
+        - subnet_id: { get_resource: subnet }
+      security_groups:
+        - { get_resource: security_group }
+
+  security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      rules:
+         # Ingress:
+         - { remote_ip_prefix: 0.0.0.0/0, direction: ingress, protocol: icmp } # Ping
+         - { remote_ip_prefix: 0.0.0.0/0, direction: ingress, protocol: tcp, port_range_min: 22, port_range_max: 22 } # SSH
+         - { remote_ip_prefix: 0.0.0.0/0, direction: ingress, protocol: tcp, port_range_min: 80,  port_range_max: 80 } # HTTP
+         - { remote_ip_prefix: 0.0.0.0/0, direction: ingress, protocol: tcp, port_range_min: 443, port_range_max: 443 } # HTTPS
+         # Egress:
+         - { remote_ip_prefix: 0.0.0.0/0, direction: egress, protocol: tcp, port_range_min: 53,  port_range_max: 53 }  # DNS
+         - { remote_ip_prefix: 0.0.0.0/0, direction: egress, protocol: udp, port_range_min: 53,  port_range_max: 53 }  # DNS
+         - { remote_ip_prefix: 0.0.0.0/0, direction: egress, protocol: tcp, port_range_min: 80,  port_range_max: 80  } # HTTP
+         - { remote_ip_prefix: 0.0.0.0/0, direction: egress, protocol: tcp, port_range_min: 443, port_range_max: 443 } # HTTPS
+
+#>===========================================================================<#
+#>=======                           Outputs                           =======<#
+#>===========================================================================<#
+outputs:
+  ip:
+    value: { get_attr: [port, fixed_ips, 0, ip_address]}
