@@ -1,0 +1,47 @@
+---
+
+- name: Add domains
+  include_vars: "{{ item }}"
+  with_first_found:
+    - files:
+        - "domains.yml"
+      errors: ignore
+  tags:
+    - init
+    - revokedomain
+    - grantdomain
+    - up_lb
+
+- import_tasks: init/iptables.yml
+  tags:
+    - init
+    - up_lb
+
+- import_tasks: init/selinux.yml
+  tags:
+    - init
+    - up_lb
+
+- import_tasks: init/filebeat.yml
+  tags:
+    - init
+    - up_lb
+
+- import_tasks: init/rsyslog.yml
+  tags:
+    - init
+    - up_lb
+
+- import_tasks: grant/telegraf.yml
+  tags:
+    - init
+    - grantdomain
+    - revokedomain
+    - up_lb
+
+- import_tasks: grant/haproxy.yml
+  tags:
+    - init
+    - grantdomain
+    - revokedomain
+    - up_lb

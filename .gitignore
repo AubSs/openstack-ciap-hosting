@@ -1,0 +1,12 @@
+# Conf
+*.ini
+
+# Emacs
+*~
+
+# MacOS
+.DS_Store
+
+# Tmp
+*.save
+*.lock

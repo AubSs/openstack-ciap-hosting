@@ -1,0 +1,344 @@
+heat_template_version: '2018-08-31'
+
+description: CIAP OCTANE v4
+
+#>===========================================================================<#
+#>=======                         Parameters                          =======<#
+#>===========================================================================<#
+parameters:
+  public_net:
+    type: string
+    default: public
+    description: >
+      ID or name of public network for which floating IP addresses will be allocated
+
+  server_image:
+    type: string
+    description: Id of CentOS 7 image
+
+  server_flavor:
+    type: string
+    default: ds2G
+    description: Flavor desired
+
+  deploy_plug:
+    type: boolean
+    default: false
+    description: Deploy a plug server
+
+  cidr:
+    type: string
+    default: 10.1.0.0/24
+    description: CIDR
+
+  ssh_username:
+    type: string
+    default: ciap
+    description: User name ssh
+
+  ssh_public_key:
+    type: string
+    description: Admin public key
+
+  openstack_rc:
+    type: string
+
+  container_name:
+    type: string
+
+  ansible_tarball:
+    type: string
+
+  bl:
+    type: string
+    default: GTS
+    constraints:
+      - allowed_values:
+        - GTS
+        - BSC
+        - ITIM
+        - ITEC
+        - IBFS
+
+  env:
+    type: string
+    default: TMP
+    constraints:
+      - allowed_values:
+        - DEV
+        - HML
+        - PRD
+        - TMP
+
+#>===========================================================================<#
+#>=======                          Resources                          =======<#
+#>===========================================================================<#
+resources:
+#>================================= KEYPAIR =================================<#
+  ssh_key:
+    type: OS::Nova::KeyPair
+    properties:
+      name:
+        list_join:
+          - '-'
+          - [{ get_param: 'OS::stack_name' }, { str_split: ['-', { get_param: 'OS::stack_id' }, 0] }]
+      save_private_key: True
+
+#>================================= ROUTER ==================================<#
+  ciap_router:
+    type: OS::Neutron::Router
+    properties:
+      name: CIAP Router
+      external_gateway_info:
+        network: { get_param: public_net }
+
+#>=============================== PUBLIC ZONE ===============================<#
+  public_network:
+    type: OS::Neutron::Net
+    properties:
+      name: CIAP Public Network
+
+  public_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      name: CIAP Public Subnet
+      network_id: { get_resource: public_network }
+      cidr:
+        str_replace:
+          template: cidr_0.cidr_8.cidr_16.0/27
+          params:
+            cidr_0:  { str_split: ['.', { get_param: cidr }, 0] }
+            cidr_8:  { str_split: ['.', { get_param: cidr }, 1] }
+            cidr_16: { str_split: ['.', { get_param: cidr }, 2] }
+      dns_nameservers: [ "1.1.1.1", "1.0.0.1" ]
+
+  public_router_interface:
+    type: OS::Neutron::RouterInterface
+    properties:
+      router: { get_resource: ciap_router}
+      subnet: { get_resource: public_subnet}
+
+  up_lb_servers:
+    type: load-balancer.yaml
+    properties:
+      name:
+        list_join:
+          - '-'
+          - [{ get_param: 'OS::stack_name' }, 'up_lb']
+      image: { get_param: server_image }
+      flavor: { get_param: server_flavor }
+      ssh_user: { get_param: ssh_username }
+      ssh_authorized_key: { get_attr: [ ssh_key, public_key ] }
+      network: { get_resource: public_network }
+      subnet: { get_resource: public_subnet }
+      admin_ip: { get_attr: [ admin_server, private_ip ]}
+      metadata: {
+        'mid_waf_lb_ip': { get_attr: [ mid_waf_servers, lb_address ] },
+        'mid_vpn_lb_ip': { get_attr: [ mid_vpn_servers, lb_address ] },
+        'ciap': { get_param: 'OS::stack_name' },
+        'instance': 'up_lb',
+        'metrology_ip': { get_attr: [ low_met_server, ip ]},
+        'bl': { get_param: bl },
+        'env': { get_param: env },
+        'stage': 'up',
+        'fonction': 'lb'
+      }
+
+  main_lb_floating:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network: { get_param: public_net }
+      port_id: { get_attr: [ up_lb_servers, lb_port_id ] }
+
+#>============================= FILTERED ZONE ============================<#
+  filtered_network:
+    type: OS::Neutron::Net
+    properties:
+      name: CIAP Filtered Network
+
+  filtered_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      name: CIAP Filtered Subnet
+      network_id: { get_resource: filtered_network }
+      cidr:
+        str_replace:
+          template: cidr_0.cidr_8.cidr_16.32/27
+          params:
+            cidr_0:  { str_split: ['.', { get_param: cidr }, 0] }
+            cidr_8:  { str_split: ['.', { get_param: cidr }, 1] }
+            cidr_16: { str_split: ['.', { get_param: cidr }, 2] }
+      dns_nameservers: [ "1.1.1.1", "1.0.0.1" ]
+
+  filtered_router_interface:
+    type: OS::Neutron::RouterInterface
+    properties:
+      router: { get_resource: ciap_router}
+      subnet: { get_resource: filtered_subnet}
+
+  mid_waf_servers:
+    type: load-balancer.yaml
+    properties:
+      name:
+        list_join:
+          - '-'
+          - [{ get_param: 'OS::stack_name' }, 'mid_waf']
+      image: { get_param: server_image }
+      flavor: { get_param: server_flavor }
+      ssh_user: { get_param: ssh_username }
+      ssh_authorized_key: { get_attr: [ ssh_key, public_key ] }
+      network: { get_resource: filtered_network }
+      subnet: { get_resource: filtered_subnet }
+      admin_ip: { get_attr: [ admin_server, private_ip ]}
+      metadata: {
+        'low_fw_lb_ip': { get_attr: [ low_fw_servers, lb_address ] },
+        'ciap': { get_param: 'OS::stack_name' },
+        'instance': 'mid_waf',
+        'metrology_ip': { get_attr: [ low_met_server, ip ]},
+        'bl': { get_param: bl },
+        'env': { get_param: env },
+        'stage': 'mid',
+        'fonction': 'waf'
+      }
+
+  mid_vpn_servers:
+    type: load-balancer.yaml
+    properties:
+      name:
+        list_join:
+          - '-'
+          - [{ get_param: 'OS::stack_name' }, 'mid_vpn']
+      image: { get_param: server_image }
+      flavor: { get_param: server_flavor }
+      ssh_user: { get_param: ssh_username }
+      ssh_authorized_key: { get_attr: [ ssh_key, public_key ] }
+      network: { get_resource: filtered_network }
+      subnet: { get_resource: filtered_subnet }
+      admin_ip: { get_attr: [ admin_server, private_ip ]}
+      metadata: {
+        'ciap': { get_param: 'OS::stack_name' },
+        'instance': 'mid_vpn',
+        'metrology_ip': { get_attr: [ low_met_server, ip ]},
+        'bl': { get_param: bl },
+        'env': { get_param: env },
+        'stage': 'mid',
+        'fonction': 'vpn'
+      }
+
+#>============================ PRIVATE ZONE ============================<#
+  private_network:
+    type: OS::Neutron::Net
+    properties:
+      name: CIAP Private Network
+
+  private_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      name: CIAP Private Subnet
+      network_id: { get_resource: private_network }
+      cidr:
+        str_replace:
+          template: cidr_0.cidr_8.cidr_16.64/27
+          params:
+            cidr_0:  { str_split: ['.', { get_param: cidr }, 0] }
+            cidr_8:  { str_split: ['.', { get_param: cidr }, 1] }
+            cidr_16: { str_split: ['.', { get_param: cidr }, 2] }
+      dns_nameservers: [ "1.1.1.1", "1.0.0.1" ]
+
+  private_router_interface:
+    type: OS::Neutron::RouterInterface
+    properties:
+      router: { get_resource: ciap_router}
+      subnet: { get_resource: private_subnet}
+
+  low_met_server:
+    type: low-met.yaml
+    properties:
+      image: { get_param: server_image }
+      flavor: { get_param: server_flavor }
+      ssh_user: { get_param: ssh_username }
+      ssh_authorized_key: { get_attr: [ ssh_key, public_key ] }
+      network: { get_resource: private_network }
+      subnet: { get_resource: private_subnet }
+      ciap_name: { get_param: 'OS::stack_name' }
+      metadata: {
+        'metrology_ip': '127.0.0.1',
+        'bl': { get_param: bl },
+        'env': { get_param: env },
+        'stage': 'low',
+        'fonction': 'met'
+      }
+
+  low_fw_servers:
+    type: load-balancer.yaml
+    properties:
+      name:
+        list_join:
+          - '-'
+          - [{ get_param: 'OS::stack_name' }, 'low_fw']
+      image: { get_param: server_image }
+      flavor: { get_param: server_flavor }
+      ssh_user: { get_param: ssh_username }
+      ssh_authorized_key: { get_attr: [ ssh_key, public_key ] }
+      network: { get_resource: private_network }
+      subnet: { get_resource: private_subnet }
+      admin_ip: { get_attr: [ admin_server, private_ip ]}
+      metadata: {
+        'ciap': { get_param: 'OS::stack_name' },
+        'instance': 'low_fw',
+        'metrology_ip': { get_attr: [ low_met_server, ip ]},
+        'bl': { get_param: bl },
+        'env': { get_param: env },
+        'stage': 'low',
+        'fonction': 'fw'
+      }
+
+#>============================== PLUG ZONE ==============================<#
+  plug_server:
+    type: plug.yaml
+    condition: { get_param: deploy_plug }
+    properties:
+      server_image: { get_param: server_image }
+      server_flavor: { get_param: server_flavor }
+      cidr: { get_param: cidr }
+      ssh_username: { get_param: ssh_username }
+      ssh_key: { get_attr: [ ssh_key, public_key ] }
+      ciap_router: { get_resource: ciap_router }
+      ciap_name: { get_param: 'OS::stack_name' }
+      metadata: {
+        'metrology_ip': { get_attr: [ low_met_server, ip ]},
+        'bl': { get_param: bl },
+        'env': { get_param: env },
+        'stage': 'low',
+        'fonction': 'plug'
+      }
+
+#>============================== ADMIN ZONE ==============================<#
+  admin_server:
+    type: admin.yaml
+    properties:
+      public_net: { get_param: public_net }
+      server_image: { get_param: server_image }
+      server_flavor: { get_param: server_flavor }
+      cidr: { get_param: cidr }
+      ssh_username: { get_param: ssh_username }
+      ssh_authorized_key: { get_param: ssh_public_key }
+      ssh_private_key: { get_attr: [ ssh_key, private_key ] }
+      ciap_router: { get_resource: ciap_router }
+      openstack_rc: { get_param: openstack_rc }
+      container_name: { get_param: container_name }
+      ansible_tarball: { get_param: ansible_tarball }
+      ciap_name: { get_param: 'OS::stack_name' }
+
+#>===========================================================================<#
+#>=======                           Outputs                           =======<#
+#>===========================================================================<#
+outputs:
+  admin_ip:
+    description: Floating IP address of admin server
+    value: { get_attr: [ admin_server, public_ip ]}
+
+  public_ip:
+    description: Floating IP address of ciap
+    value: { get_attr: [ main_lb_floating, floating_ip_address] }
+

@@ -1,0 +1,14 @@
+---
+
+- name: Install filebeat config file
+  template:
+    src: "grant/filebeat_yml.j2"
+    dest: "/etc/filebeat/filebeat.yml"
+    owner: root
+    backup: yes
+    group: root
+    mode: 0640
+  when: item.domain is defined
+  with_items:
+     - "{{ granted_domains }}"
+  notify: Restart filebeat daemon

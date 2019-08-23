@@ -1,0 +1,8 @@
+---
+
+- name: Start haproxy daemon
+  systemd:
+    name: haproxy
+    enabled: yes
+    state: restarted
+  ignore_errors: true

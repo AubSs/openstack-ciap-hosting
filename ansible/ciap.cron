@@ -1,0 +1,21 @@
+#!/bin/bash -x
+
+# stop on errors
+set -e
+
+script_name=ciap.ansible.lock
+script_dir=$(cd $(dirname "${BASH_SOURCE[0]}") && pwd)
+pidfile="${script_dir}/${script_name}"
+
+# lock it
+exec 200>$pidfile
+flock -n 200 || (echo "Another task is running this ansible; Exit now." && exit 1)
+pid=$$
+echo $pid 1>&200
+
+## launch ansible
+echo "Start ansible"
+cd $script_dir
+TIME=$(date +%Y-%m-%d.%H-%M-%S)
+LOG_PATH=/var/log/ciap
+python3 cli.py --tags init | tee $LOG_PATH/ciap.ansible.$TIME.log

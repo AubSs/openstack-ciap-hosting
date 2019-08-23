@@ -1,0 +1,54 @@
+---
+
+- name: Setup Low Met
+  hosts: low_met
+  become: yes
+  gather_facts: yes
+  roles:
+    - common
+    - low_met
+
+- name: Setup plug
+  hosts: plug
+  become: yes
+  gather_facts: yes
+  roles:
+    - common
+    - plug
+
+- name: Setup Low Fw
+  hosts: low_fw
+  become: yes
+  gather_facts: yes
+  roles:
+    - common
+    - healtcheck
+    - low_fw
+
+- name: Setup Mid Waf
+  hosts: mid_waf
+  become: yes
+  gather_facts: yes
+  roles:
+    - common
+    - healtcheck
+    - mid_waf
+
+- name: Setup Mid VPN
+  hosts: mid_vpn
+  become: yes
+  gather_facts: yes
+  roles:
+    - common
+    - healtcheck
+    - mid_vpn
+
+- name: Setup UP LB
+  hosts: up_lb
+  become: yes
+  gather_facts: yes
+  roles:
+    - common
+    - healtcheck
+    - up_lb
+

@@ -1,0 +1,74 @@
+---
+
+- name: Remove firewalld software
+  package:
+    name: firewalld
+    state: absent
+  notify: Disable firewalld daemon
+
+- name: Remove postfix software
+  package:
+    name: postfix
+    state: absent
+  notify: Disable postfix daemon
+
+- name: Install epel-release
+  package:
+    name: epel-release
+    state: present
+
+- name: Install editors
+  package: name={{ item }} state=present
+  with_items:
+    - vim-enhanced
+    - emacs-nox
+    - nano
+
+- name: Install utils
+  package: name={{ item }} state=present
+  with_items:
+    - zip
+    - unzip
+    - iptables-services
+
+- name: Install Python 3.6
+  package: name={{item}} state=present
+  with_items:
+    - python36
+    - python36-pip
+    - python36-devel
+    - python36-virtualenv
+
+- name: Install RPM key
+  rpm_key:
+    key: "{{ item }}"
+    state: present
+  with_items:
+    - https://packages.elastic.co/GPG-KEY-elasticsearch
+    - https://repos.influxdata.com/influxdb.key
+
+- name: Add the Elastic 7.x repository
+  copy:
+    src: elastic-7.repo
+    dest: /etc/yum.repos.d/elastic-7.repo
+    owner: root
+    group: root
+    mode: 0400
+    backup: yes
+    force: yes
+
+- name: Add the InfluxDB repository
+  copy:
+    src: influxdb.repo
+    dest: /etc/yum.repos.d/influxdb.repo
+    owner: root
+    group: root
+    mode: 0400
+    backup: yes
+    force: yes
+
+- name: Install Telemetry
+  package: name={{ item }} state=present
+  with_items:
+    - filebeat
+    - telegraf

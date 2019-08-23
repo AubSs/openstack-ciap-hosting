@@ -1,0 +1,36 @@
+# OpenVPN configuration
+  if [fields][log_type] == "vpn_connect" {
+     grok {
+           match => [ "message" , "%{SYSLOGTIMESTAMP:timestamp} %{DATA} %{DATA:stack}-Client-%{DATA:name}@%{DATA:domain}/%{IPORHOST:source_ip}:%{DATA:source_port} SENT CONTROL %{GREEDYDATA}" ]
+           add_field => [ "az", "%{[fields][az]}" ]
+           add_field => [ "ciap", "%{[fields][ciap]}" ]
+           add_field => [ "bl", "%{[fields][bl]}" ]
+           add_field => [ "env", "%{[fields][env]}" ]
+           add_field => [ "fonction", "%{[fields][fonction]}" ]
+           add_field => [ "region", "%{[fields][region]}" ]
+           add_field => [ "stage", "%{[fields][stage]}" ]
+           add_field => [ "hostname", "%{[fields][hostname]}" ]
+           add_field => [ "genre", "%{[fields][genre]}" ]
+           add_field => [ "connect", "1" ]
+     }
+     mutate {
+       gsub => [ "database", "\.", "_" ]
+     }
+  } else if [fields][log_type] == "vpn_disconnect" {
+     grok {
+           match => [ "message" , "%{SYSLOGTIMESTAMP:timestamp} %{DATA} %{DATA:stack}-Client-%{DATA:name}@%{DATA:domain}/%{IPORHOST:source_ip}:%{DATA:source_port} SIGUSR1%{GREEDYDATA}" ]
+           add_field => [ "az", "%{[fields][az]}" ]
+           add_field => [ "ciap", "%{[fields][ciap]}" ]
+           add_field => [ "bl", "%{[fields][bl]}" ]
+           add_field => [ "env", "%{[fields][env]}" ]
+           add_field => [ "fonction", "%{[fields][fonction]}" ]
+           add_field => [ "region", "%{[fields][region]}" ]
+           add_field => [ "stage", "%{[fields][stage]}" ]
+           add_field => [ "hostname", "%{[fields][hostname]}" ]
+           add_field => [ "genre", "%{[fields][genre]}" ]
+           add_field => [ "connect", "0" ]
+     }
+     mutate {
+       gsub => [ "database", "\.", "_" ]
+     }
+  }

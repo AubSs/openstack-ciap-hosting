@@ -1,0 +1,17 @@
+---
+
+#Ansible best-practice : use template for complex iptables rules
+- name: Define iptables rules for granted domains and granted VPN streams
+  template:
+    src: "iptables.j2"
+    dest: "/etc/sysconfig/iptables"
+    owner: root
+    backup: yes
+    force: yes
+    group: root
+    mode: 0644
+  when: item.domain is defined
+  with_items:
+    - "{{ granted_domains }}"
+  notify: Reload iptables daemon
+

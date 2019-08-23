@@ -1,0 +1,35 @@
+filebeat.inputs:
+- type: log
+  enabled: true
+  paths:
+    - "{{ v_log_path }}/iptables.log"
+  fields:
+        log_type: iptables_access
+        az : "{{ openstack.location.zone }}"
+        ciap : "{{ ciap }}"
+        bl : "{{ bl }}"
+        env : "{{ env }}"
+        fonction : "{{ fonction }}"
+        region : "{{ openstack.location.region_name }}"
+        stage : "{{ stage }}"
+        hostname: "{{ openstack.name }}"
+        genre: "iptables"
+  exclude_lines: ['(.*)(DPT={{ v_healthcheck_port }})(.*)', '(.*)(TTL=64)(.*)']
+
+filebeat.config.modules:
+  path: ${path.config}/modules.d/*.yml
+  reload.enabled: false
+
+setup.template.settings:
+  index.number_of_shards: 3
+
+output.logstash:
+  hosts: ["{{ metrology_ip }}:{{ v_metrology_logstash_port }}"]
+  ssl.enabled: true
+  ssl.certificate: "{{ v_certificates_path }}/filebeat.crt"
+  ssl.key: "{{ v_certificates_path }}/filebeat.key" 
+  ssl.verification_mode: none
+
+logging.level: error
+logging.selectors: ["*"]
+logging.metrics.enabled : false

@@ -1,0 +1,242 @@
+heat_template_version: '2018-08-31'
+
+description: CIAP load balancer
+
+#>===========================================================================<#
+#>=======                         Parameters                          =======<#
+#>===========================================================================<#
+parameters:
+  name:
+    type: string
+    description: Servers name
+
+  image:
+    type: string
+    description: Image used by the servers
+
+  flavor:
+    type: string
+    description: Flavor desired
+
+  ssh_user:
+    type: string
+    description: SSH User to connect to the servers
+
+  ssh_authorized_key:
+    type: string
+    description: SSH Key to connect to the servers
+
+  network:
+    type: string
+    description: Network used by the servers
+
+  subnet:
+    type: string
+    description: Subnet used by the servers
+
+  admin_ip:
+    type: string
+    description: Admin private IP
+
+  metadata:
+    default: {}
+    type: json
+
+#>===========================================================================<#
+#>=======                          Resources                          =======<#
+#>===========================================================================<#
+resources:
+  server_group_id:
+    type: OS::Heat::RandomString
+
+  servers:
+    type: OS::Heat::AutoScalingGroup
+    properties:
+      desired_capacity: 1
+      min_size: 1
+      max_size: 3
+      cooldown: 300
+      resource:
+        type: load-balancer-server.yaml
+        properties:
+          name: { get_param: name }
+          flavor: { get_param: flavor }
+          image: { get_param: image }
+          ssh_user: { get_param: ssh_user }
+          ssh_authorized_key: { get_param: ssh_authorized_key }
+          network: { get_param: network }
+          subnet: { get_param: subnet }
+          security_group: { get_resource: security_group }
+          pool: { get_resource: pool }
+          metadata: { map_merge: [{
+            'metering.server_group': { get_resource: server_group_id },
+            'ssh_user': { get_param: ssh_user }
+          }, { get_param: metadata } ]}
+
+  security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      rules:
+        ##### Ingress #####
+        - remote_ip_prefix: 0.0.0.0/0 # HTTPS
+          direction: ingress
+          protocol: tcp
+          port_range_min: 443
+          port_range_max: 443
+        - remote_ip_prefix: # SSH
+            str_replace:
+              template: ip/32
+              params:
+                ip: { get_param: admin_ip }
+          direction: ingress
+          protocol: tcp
+          port_range_min: 22
+          port_range_max: 22
+        - remote_ip_prefix: # Ping
+            str_replace:
+              template: ip/32
+              params:
+                ip: { get_param: admin_ip }
+          direction: ingress
+          protocol: icmp
+        - remote_ip_prefix: 0.0.0.0/0 # Health Monitor
+          direction: ingress
+          protocol: tcp
+          port_range_min: 65000
+          port_range_max: 65000
+        ##### Egress #####
+        - remote_ip_prefix: 0.0.0.0/0
+          direction: egress
+          protocol: tcp
+          port_range_min: 80
+          port_range_max: 80
+        - remote_ip_prefix: 0.0.0.0/0
+          direction: egress
+          protocol: tcp
+          port_range_min: 443
+          port_range_max: 443
+        - remote_ip_prefix: 0.0.0.0/0 # Grafana
+          direction: egress
+          protocol: tcp
+          port_range_min: 3000
+          port_range_max: 3000
+        - remote_ip_prefix: 0.0.0.0/0 # Metrology telegraf
+          direction: egress
+          protocol: tcp
+          port_range_min: 8086
+          port_range_max: 8086
+        - remote_ip_prefix: 0.0.0.0/0 # Metrology filebeat
+          direction: egress
+          protocol: tcp
+          port_range_min: 5044
+          port_range_max: 5044
+        - remote_ip_prefix: 0.0.0.0/0 # DNS
+          direction: egress
+          protocol: tcp
+          port_range_min: 53
+          port_range_max: 53
+        - remote_ip_prefix: 0.0.0.0/0 # DNS
+          direction: egress
+          protocol: udp
+          port_range_min: 53
+          port_range_max: 53
+
+  scaleup_policy:
+    type: OS::Heat::ScalingPolicy
+    properties:
+      adjustment_type: change_in_capacity
+      auto_scaling_group_id: { get_resource: servers }
+      cooldown: 300
+      scaling_adjustment: 1
+
+  scaledown_policy:
+    type: OS::Heat::ScalingPolicy
+    properties:
+      adjustment_type: change_in_capacity
+      auto_scaling_group_id: { get_resource: servers }
+      cooldown: 300
+      scaling_adjustment: -1
+
+  cpu_alarm_high:
+    type: OS::Aodh::GnocchiAggregationByResourcesAlarm
+    properties:
+      description: Scale up if CPU > 80% for 5 minutes
+      metric: cpu_util
+      aggregation_method: mean
+      granularity: 600
+      evaluation_periods: 1
+      threshold: 80
+      resource_type: instance
+      comparison_operator: gt
+      alarm_actions:
+        - str_replace:
+            template: trust+url
+            params:
+              url: { get_attr: [scaleup_policy, signal_url] }
+      query:
+        str_replace:
+          template: '{"=": {"server_group": "$ID"}}'
+          params:
+            $ID: { get_resource: server_group_id }
+
+  cpu_alarm_low:
+    type: OS::Aodh::GnocchiAggregationByResourcesAlarm
+    properties:
+      description: Scale down if CPU < 15% for 5 minutes
+      metric: cpu_util
+      aggregation_method: mean
+      granularity: 600
+      evaluation_periods: 1
+      threshold: 15
+      resource_type: instance
+      comparison_operator: lt
+      alarm_actions:
+        - str_replace:
+            template: trust+url
+            params:
+              url: { get_attr: [scaledown_policy, signal_url] }
+      query:
+        str_replace:
+          template: '{"=": {"server_group": "$ID"}}'
+          params:
+            $ID: { get_resource: server_group_id }
+
+  lb:
+    type: OS::Octavia::LoadBalancer
+    properties:
+      vip_subnet: { get_param: subnet }
+
+  listener:
+    type: OS::Octavia::Listener
+    properties:
+      loadbalancer: { get_resource: lb }
+      protocol: HTTPS
+      protocol_port: 443
+
+  pool:
+    type: OS::Octavia::Pool
+    properties:
+      listener: { get_resource: listener }
+      lb_algorithm: ROUND_ROBIN
+      protocol: HTTPS
+      session_persistence:
+        type: SOURCE_IP
+
+  lb_monitor:
+    type: OS::Octavia::HealthMonitor
+    properties:
+      pool: { get_resource: pool }
+      type: HTTP
+      delay: 5
+      max_retries: 5
+      timeout: 5
+
+#>===========================================================================<#
+#>=======                           Outputs                           =======<#
+#>===========================================================================<#
+outputs:
+  lb_address:
+    value: { get_attr: [ lb, vip_address ] }
+  lb_port_id:
+    value: { get_attr: [ lb, vip_port_id ] }
+

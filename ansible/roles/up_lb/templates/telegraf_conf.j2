@@ -1,0 +1,49 @@
+# Telegraf configuration
+[global_tags]
+  az = "{{ openstack.location.zone }}"
+  ciap = "{{ ciap }}"
+  bl = "{{ bl }}"
+  env = "{{ env }}"
+  fonction = "{{ fonction }}"
+  region = "{{ openstack.location.region_name }}"
+  stage = "{{ stage }}"
+
+[agent]
+  interval = "60s"
+  round_interval = true
+  metric_batch_size = 1000
+  metric_buffer_limit = 10000
+  collection_jitter = "5s"
+  flush_interval = "60s"
+  flush_jitter = "0s"
+  precision = "s"
+  debug = false
+  quiet = true
+  logfile = "{{ v_log_path }}/telegraf/telegraf.log"
+  hostname = "{{ openstack.instance_name }}"
+  omit_hostname = false
+
+[[outputs.http]]
+  url = "https://{{ metrology_ip }}:{{ v_metrology_influxdb_port }}"
+  timeout = "5s"
+  tls_cert = "{{ v_certificates_path }}/telegraf.crt"
+  tls_key = "{{ v_certificates_path }}/telegraf.key"
+  insecure_skip_verify = true
+  data_format = "json"
+  [outputs.http.headers]
+    Content-Type = "application/json; charset=utf-8"
+
+[[inputs.haproxy]]
+  servers = ["http://{{ v_haproxy_stats_listening_ip }}:{{ v_haproxy_stats_listening_port }}/{{ v_haproxy_stats_uri }}"]
+
+{% for item in granted_domains %}
+[[inputs.net_response]]
+  protocol = "tcp"
+  address = "{{ mid_waf_lb_ip }}:443"
+  timeout = "2s"
+  [inputs.net_response.tags]
+      domain = "{{ item.domain }}"
+      component = "elb"
+
+{% endfor %}
+
